@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f2438">
+<meta name="description" content="تطبيق محصّل الغاز — تحصيل فواتير الغاز ميدانياً">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<title>محصّل الغاز</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/collector.css">
+</head>
+<body>
+
+<header class="top"><div>
+  <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
+  <button id="back" class="ico" aria-label="رجوع" hidden>→</button>
+  <svg viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M24 3c3 9 14 13 14 26a14 14 0 0 1-28 0c0-6 3-9 6-12 0 5 3 7 5 7-2-8 0-15 3-21z" fill="#f2a516"/>
+    <path d="M24 24c2 4 7 6 7 12a7 7 0 0 1-14 0c0-4 4-6 7-12z" fill="#1e6fa8"/>
+  </svg>
+  <span>
+    <h1>محصّل الغاز</h1>
+    <p id="who">جارٍ التحقق…</p>
+  </span>
+  <span class="pill" id="net">…</span>
+</div></header>
+
+<div id="menu" class="menu" hidden></div>
+
+<main id="locked">
+  <section class="card empty">
+    <h2>🔒 التطبيق مقفل</h2>
+    <p class="mute">افتحه ببصمتك أو النقش أو كلمة مرور الجهاز.</p>
+    <div class="actions" style="justify-content:center">
+      <button class="btn" id="unlockBtn">فتح</button>
+      <button class="btn ghost" id="relogin">ادخل بكلمة السر</button>
+    </div>
+    <p class="mute" id="lmsg"></p>
+  </section>
+</main>
+
+<main id="diag">
+  <section class="card">
+    <h2>⚠️ تعذر التحميل</h2>
+    <p class="mute">لم يكتمل تحميل التطبيق. جرّب إعادة المحاولة، أو أرسل النص التالي للمطور:</p>
+    <pre id="diagText" style="white-space:pre-wrap;font-size:.8rem;background:var(--paper-2);padding:.6rem;border-radius:8px;overflow:auto;max-height:200px;direction:ltr;text-align:left"></pre>
+    <div class="actions">
+      <button class="btn" id="retry">إعادة المحاولة</button>
+      <button class="btn ghost" id="hardReset">مسح كل البيانات</button>
+    </div>
+  </section>
+</main>
+
+<main id="app" hidden>
+  <section id="view"></section>
+</main>
+
+<nav class="tabs" id="tabs" hidden>
+  <button data-t="home" class="on"><span class="ico-emoji">📋</span>التحصيل</button>
+  <button data-t="ledger"><span class="ico-emoji">✅</span>ما تم تحصيله</button>
+  <button data-t="search"><span class="ico-emoji">🔍</span>بحث</button>
+</nav>
+
+<footer class="app-footer" id="footer" hidden>
+  <span>تطوير: <b>شريف نشأت</b></span>
+  <span> · </span>
+  <span>الإصدار: <b>1.0.0</b></span>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var diagEl = document.getElementById('diag');
+  var diagText = document.getElementById('diagText');
+  var lockedEl = document.getElementById('locked');
+  var appEl = document.getElementById('app');
+  var tabsEl = document.getElementById('tabs');
+  var footerEl = document.getElementById('footer');
+
+  function showDiag(msg){
+    document.getElementById('who').textContent = 'تعذر التحميل';
+    lockedEl.removeAttribute('data-show');
+    appEl.hidden = true;
+    tabsEl.hidden = true;
+    if (footerEl) footerEl.hidden = true;
+    diagEl.setAttribute('data-show', '1');
+    diagText.textContent = String(msg);
+  }
+
+  window.addEventListener('error', function(e){
+    showDiag('JS error: ' + e.message + '\n' + (e.filename||'') + ':' + (e.lineno||''));
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    showDiag('Promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+
+  setTimeout(function(){
+    if (!appEl.hidden) return;
+    if (lockedEl.getAttribute('data-show') === '1') return;
+    if (diagEl.getAttribute('data-show') === '1') return;
+    showDiag('لم يبدأ التطبيق بعد 5 ثوانٍ.\nتأكد من رفع js/collector/app.js وأن الإنترنت يعمل.\nافتح F12 > Console لمعرفة الخطأ.');
+  }, 5000);
+
+  document.getElementById('retry').onclick = function(){ location.reload(); };
+  document.getElementById('hardReset').onclick = function(){
+    if (!confirm('سيُمسح كل شيء (بيانات الدخول، الملفات، التحصيلات). هل أنت متأكد؟')) return;
+    (async function(){
+      try{
+        var dbs = await indexedDB.databases();
+        for (var i=0;i<dbs.length;i++){ if (dbs[i].name) indexedDB.deleteDatabase(dbs[i].name); }
+      }catch(e){}
+      try{ localStorage.clear(); }catch(e){}
+      try{
+        var ks = await caches.keys();
+        await Promise.all(ks.map(function(k){ return caches.delete(k); }));
+      }catch(e){}
+      try{
+        var rs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(rs.map(function(r){ return r.unregister(); }));
+      }catch(e){}
+      location.reload();
+    })();
+  };
+
+  var s = document.createElement('script');
+  s.type = 'module';
+  s.src = 'js/collector/app.js';
+  s.onerror = function(){ showDiag('فشل تحميل js/collector/app.js\nتأكد أن الملف موجود في المستودع.'); };
+  document.body.appendChild(s);
+})();
+</script>
+
+</body>
+</html>
