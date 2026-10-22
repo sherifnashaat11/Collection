@@ -8,5 +8,24 @@ const h=document.createElement('h1');h.textContent='بيان مستحقات غا
 add('العميل',g('n'));add('العنوان',`قطاع ${g('s')} · بلوك ${g('b')} · عمارة ${g('d')} · شقة ${g('a')}`);add('شهر الإصدار',g('m'));add('عدد الفواتير',g('c'));add('إجمالي المديونية',g('v'));
 if(+p.get('r'))add('رصيد مقدم',g('r'));
 const big=document.createElement('div');big.className='big';big.textContent=`المطلوب: ${g('q')} جنيه`;box.append(big);
-const f=document.createElement('div');f.className='foot';f.textContent=`المحصّل: ${g('u')} · ${new Date().toLocaleString('ar-EG')}`;box.append(f);
+
+
+const f=document.createElement('div');f.className='foot';
+f.textContent=`المحصّل: ${g('u')} · ${new Date().toLocaleString('ar-EG')}`;
+box.append(f);
+
+// إضافة عبارة "فاتورة معاد طباعتها" إذا كان الطلب إعادة طباعة
+if (p.get('reprint') === '1') {
+  const r = document.createElement('div');
+  r.style.cssText = 'text-align:center;color:#d63a3a;font-weight:800;font-size:12px;margin-top:6px;padding-top:6px;border-top:1px dashed #000;';
+  r.textContent = 'فاتورة معاد طباعتها';
+  box.append(r);
+}
+
+
+
+
+
+
+
 </script></body></html>

@@ -1,11 +1,11 @@
-import {all, get, put} from '../core/db.js';
-import {money} from '../core/utils.js';
-import {list, pay, addAdvance, undo, canUndo, ldate, keyOf as key, partialPay} from './ledger.js';
-import {totals} from './payment.js';
-import {openPage} from './buttons.js';
-import {getManual, saveManual} from './names.js';
-import {choose} from './personal.js';
-import {monthOptions} from './monthly.js';
+import { all, get, put } from '../core/db.js';
+import { money } from '../core/utils.js';
+import { list, pay, addAdvance, undo, canUndo, ldate, keyOf as key, partialPay } from './ledger.js';
+import { totals } from './payment.js';
+import { openPage } from './buttons.js';
+import { getManual, saveManual } from './names.js';
+import { choose } from './personal.js';
+import { monthOptions } from './monthly.js';
 
 export const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -36,6 +36,11 @@ export async function refresh(){
 
 export const work = () => st.S.filter(s => (st.all || s.inRoute) && !st.paid.has(key(s)));
 
+
+
+
+
+
 export const toast = t => {
   const e = document.getElementById('toast');
   if (!e) return;
@@ -44,6 +49,43 @@ export const toast = t => {
   clearTimeout(e._t);
   e._t = setTimeout(() => { e.className = ''; }, 2600);
 };
+
+
+/* ===== دالة تأكيد الطباعة بعد السداد ===== */
+function askPrint(entries) {
+  return new Promise(resolve => {
+    const d = document.createElement('dialog');
+    d.innerHTML = `
+      <h3 style="margin-bottom: 10px;">✅ تم السداد بنجاح</h3>
+      <p class="mute" style="margin-bottom: 15px;">هل تريد طباعة الإيصال الآن؟</p>
+      <div class="actions" style="display: flex; gap: 10px;">
+        <button class="btn" id="printYes" style="flex: 1;">🖨️ نعم، طباعة</button>
+        <button class="btn ghost" id="printNo" style="flex: 1;">❌ لا، شكراً</button>
+      </div>
+    `;
+    document.body.append(d);
+    d.showModal();
+    
+    d.querySelector('#printNo').onclick = () => { d.close(); d.remove(); resolve(false); };
+    d.querySelector('#printYes').onclick = () => {
+      d.close(); d.remove();
+      // فتح صفحة الطباعة لكل عملية
+      entries.forEach((e, idx) => {
+        setTimeout(() => {
+          const s = st.by.get(e.key) || {};
+          const q = new URLSearchParams({
+            n: s.name || '', s: s.sector || '', b: s.blk || '', d: s.bld || '', a: s.apt || '',
+            v: e.due || s.value || 0, r: e.fromAdvance || 0, q: e.amount || 0,
+            c: e.count || 0, m: st.cycle, u: st.who, k: e.key
+          }).toString();
+          window.open('pages/print.html?' + q, '_blank');
+        }, idx * 500); // تأخير بسيط بين كل فاتورة لعدم حظر المتصفح
+      });
+      resolve(true);
+    };
+  });
+}
+
 
 export function setFilter(f){ st.filter = f; }
 export function clearFilter(){ st.filter = null; }
@@ -69,66 +111,85 @@ export function receipt(e){
   w.document.close();
 }
 
-/* ===== بطاقات الشقق ===== */
+/* ===== التصميم الجديد لبطاقات الشقق ===== */
 function aptsView(a){
   const ch = a.filter(s => st.sel.has(key(s)));
   const ct = tot(ch);
   const allTot = tot(a);
+  
+  
+  
+    const totalBuildingDue = allTot.value; // إجمالي المديونية في العمارة
+  const selectedDue = ct.value; // إجمالي المحدد
+  const remainingValue = totalBuildingDue - selectedDue;
+  
+  
+  
+  
+  
   const cards = a.map(s => {
     const k = key(s);
     const b = st.adv.get(k) || 0;
     const selected = st.sel.has(k);
     const nameHtml = s.name ? esc(s.name) : '<em class="empty-name">بدون اسم</em>';
-    const advHtml = b ? `<span class="apt-adv">· مقدم ${money(b)}</span>` : '';
+    const isOdd = Number(s.apt) % 2 === 1 ? '1' : '0';
     const partial = (s.count || 0) > 1;
     let hiClass = '';
     if (st.filter){
       if (st.filter.kind === 'apt' && st.filter.matches.has('apt:' + k)) hiClass = 'hi-apt';
       else if (st.filter.kind === 'bld' && st.filter.matches.has('bld:' + s.sector + '|' + s.blk + '|' + s.bld)) hiClass = 'hi-bld';
     }
-    return `<div class="apt-card ${selected?'on':''} ${hiClass}" data-card="${k}">
-      <label class="apt-chk"><input type="checkbox" data-k="${k}" ${selected?'checked':''}></label>
-      <div class="apt-apt">${s.apt}</div>
-      <div class="apt-body">
+    
+    return `<div class="apt-card ${selected?'on':''} ${hiClass}" data-card="${k}" data-apt-odd="${isOdd}">
+      <div class="apt-row-1">
         <div class="apt-name" data-nm="${k}">${nameHtml}</div>
-        <div class="apt-meta">${s.count} فاتورة${advHtml}</div>
+        <button class="apt-val-btn" data-p="${k}" type="button">${money(due(s))}</button>
       </div>
-      <button class="apt-val" data-p="${k}" type="button">${money(due(s))}</button>
-      <div class="apt-menu-wrap">
-        <button class="apt-dots" data-m="${k}" type="button" aria-label="خيارات">⋮</button>
-        <div class="apt-pop" data-pop="${k}" hidden>
-          <button data-act="read" data-id="${k}" type="button">قراءة عداد</button>
-          ${partial ? `<button data-act="partial" data-id="${k}" type="button">سداد جزئي</button>` : ''}
-          <div class="apt-pop-info">الفواتير: ${s.count} · القيمة: ${money(s.value)}</div>
-          ${!s.name ? `<button data-act="name" data-id="${k}" type="button">تعديل الاسم</button>` : ''}
+      
+      <div class="apt-row-2">
+        <div class="apt-info">
+          <span class="apt-apt-box">${s.apt}</span>
+          <span class="apt-count">${s.count} فاتورة</span>
+        </div>
+        <label class="apt-chk"><input type="checkbox" data-k="${k}" ${selected?'checked':''}></label>
+        <div class="apt-menu-wrap">
+          <button class="apt-dots" data-m="${k}" type="button" aria-label="خيارات">⋮</button>
+          <div class="apt-pop" data-pop="${k}" hidden>
+            <button data-act="read" data-id="${k}" type="button">قراءة عداد</button>
+            ${partial ? `<button data-act="partial" data-id="${k}" type="button">سداد جزئي</button>` : ''}
+            <div class="apt-pop-info">الفواتير: ${s.count} · القيمة: ${money(s.value)}</div>
+            ${!s.name ? `<button data-act="name" data-id="${k}" type="button">تعديل الاسم</button>` : ''}
+          </div>
         </div>
       </div>
     </div>`;
   }).join('');
-  const html = `<div class="bh">
-    <h2>عمارة ${st.bld} <span class="bld-total">— ${money(allTot.value)} ج</span></h2>
-    <label class="chk"><input type="checkbox" id="all" ${ch.length===a.length&&a.length?'checked':''}> تحديد الكل</label>
-  </div>
-  <div class="apt-list">${cards}</div>`;
-  return {html, ch, ct, allTot};
-}
 
-/* ===== الكارت السفلي ===== */
-const bar = v => {
-  const cnt = v.ch.length;
-  const inv = v.ch.reduce((t,s) => t + (s.count||0), 0);
-  const has = cnt > 0;
-  return `<div class="bar">
-    <div class="bar-row">
-      ${has
-        ? `<span><b>${cnt}</b> شقة · <b>${inv}</b> فاتورة</span>`
-        : `<span class="mute">لم تحدد شيئاً</span>`}
-      <button class="btn" id="pay" ${has?'':'disabled'} type="button">
-        ${has ? `سداد (${money(v.ct.value)} ج)` : 'سداد'}
-      </button>
-    </div>
-  </div>`;
-};
+  let barHtml = '';
+  if (ch.length > 0) {
+    barHtml = `
+      <div class="building-bottom-card" style="background: var(--card); border-top: 2px solid var(--line); padding: 12px; margin-top: 10px; border-radius: 0 0 var(--r-lg) var(--r-lg);">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: var(--ink);">
+          <span>إجمالي العمارة:</span>
+          <b>${money(allTot.value)} ج</b>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: var(--ink);">
+          <span>المتبقي بعد السداد:</span>
+          <b>${money(remainingValue)} ج</b>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; color: var(--ember); font-weight: 800;">
+          <span>المحدد (${ch.length} شقة · ${ch.reduce((t,s) => t + (s.count||0), 0)} فاتورة):</span>
+          <b>${money(ct.value)} ج</b>
+        </div>
+        <button class="btn" id="pay" style="width: 100%; background: var(--ok); color: #fff;">
+          سداد المحدد (${money(ct.value)} ج)
+        </button>
+      </div>
+    `;
+  }
+
+  return {html: cards, ch, ct, allTot, barHtml};
+}
 
 /* ===== السداد الجزئي ===== */
 function partialDialog(s){
@@ -190,7 +251,7 @@ function partialDialog(s){
   });
 }
 
-/* ===== ربط الأحداث ===== */
+/* ===== ربط أحداث الشقق ===== */
 function bind(el, a, v, again){
   el.querySelectorAll('[data-k]').forEach(c => {
     c.onchange = () => { c.checked ? st.sel.add(c.dataset.k) : st.sel.delete(c.dataset.k); again(); };
@@ -259,12 +320,27 @@ function bind(el, a, v, again){
       const k = btn.dataset.p, s = st.by.get(k), amt = due(s);
       if (!amt){ toast('لا يوجد مبلغ مستحق'); return; }
       if (!confirm(`تأكيد سداد شقة ${s.apt} — ${s.name||'بدون اسم'} بمبلغ ${money(amt)} جنيه؟`)) return;
-      await pay(st.no, [s], st.adv);
+     
+
+
+
+
+
+	      const entry = await pay(st.no, [s], st.adv);
       await put('lastPosition','last',{sector:st.sector, blk:st.blk, bld:st.bld});
       st.sel.delete(k);
       await refresh();
       toast(`تم سداد شقة ${s.apt} (${money(amt)} جنيه)`);
+      
+      // رسالة تأكيد الطباعة
+      await askPrint([entry || { key: k, due: s.value, amount: amt, count: s.count, fromAdvance: 0 }]);
+      
       again();
+	  
+	  
+	  
+	  
+	  
     };
   });
 
@@ -273,12 +349,26 @@ function bind(el, a, v, again){
     if (!v.ch.length) return;
     const amt = v.ct.value;
     if (!confirm(`تأكيد سداد ${v.ch.length} شقة بمبلغ ${money(amt)} جنيه؟`)) return;
-    await pay(st.no, v.ch, st.adv);
+    
+	
+	
+	
+	
+	    const entries = await pay(st.no, v.ch, st.adv);
     await put('lastPosition','last',{sector:st.sector, blk:st.blk, bld:st.bld});
     st.sel.clear();
     await refresh();
     toast(`تم سداد ${v.ch.length} شقة (${money(amt)} جنيه)`);
+    
+    // رسالة تأكيد الطباعة لكل شقة
+    await askPrint(entries || v.ch.map(s => ({ key: key(s), due: s.value, amount: due(s), count: s.count, fromAdvance: 0 })));
+    
     again();
+	
+	
+	
+	
+	
   };
 }
 
@@ -306,27 +396,80 @@ export async function renderHome(el){
 
   let ov = null;
 
-  /* ===== شريط الأدوات: 3 أوضاع ===== */
-  let html = `<div class="pick">
+  let html = `
+  <div style="margin-bottom: 10px;">
+    <button class="btn" id="mainSearchBtn" style="width: 100%; font-size: 14px; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white;">🔍 بحث خارج النطاق</button>
+  </div>
+  <div class="pick">
     <label class="field"><span>القطاع</span><select id="sSec">${opt(secs,st.sector)}</select></label>
     <label class="field"><span>البلوك</span><select id="sBlk">${opt(blks,st.blk)}</select></label>
     <label class="field"><span>العمارة</span>
-      <input id="bldIn" class="num2" type="text" inputmode="numeric" maxlength="2" placeholder="—" value="${st.open||''}">
+      <select id="sBld">
+        <option value="">— اختر —</option>
+        ${Object.keys(g).sort((a,b)=> Number(a)-Number(b)).map(b => `<option value="${b}" ${st.open === b ? 'selected' : ''}>${b}</option>`).join('')}
+      </select>
     </label>
   </div>
-  <div class="view-mode">
-    <button class="btn ghost sm" id="modeList" type="button">عرض القائمة</button>
-    <button class="btn ghost sm" id="modeOpen" type="button">فتح العمارة</button>
+  <div style="margin-bottom: 10px; font-size: 12px; color: var(--mute); text-align: center;">
+    آخر عمارة: ${st.open ? `عمارة ${st.open} (اضغط للرجوع)` : 'لم يتم فتح عمارة بعد'}
+  </div>
+  <div class="view-mode" style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
+    <button class="btn ghost sm" id="modeList" type="button" style="flex: 1;">عرض القائمة</button>
+    <input id="bldIn" class="num2" type="text" inputmode="numeric" maxlength="2" placeholder="رقم العمارة" value="${st.open||''}" style="flex: 1; min-height: 40px; text-align: center; font-weight: 800;">
   </div>
   <p class="sum">${t.n} شقة · ${t.count} فاتورة · <b>${money(t.value)}</b> جنيه</p>
   <div class="blist">`;
 
-  /* ===== إذا كان وضع "فتح العمارة" مفعّل ===== */
   if (st.open && g[st.open]){
     st.bld = st.open;
+	
+	
+	  // حفظ آخر عمارة تم فتحها
+    localStorage.setItem('lastPosition', JSON.stringify({
+      sector: st.sector,
+      blk: st.blk,
+      bld: st.open
+    }));
+	
+	
+	
+	
+	
     const aa = g[st.open].sort((p,q) => srt(p.apt, q.apt));
     ov = {a: aa, v: aptsView(aa)};
-    html += `<div class="card apts">${ov.v.html}</div>`;
+    
+    const sortedBlds = Object.keys(g).sort((a,b) => Number(a)-Number(b));
+    const currentIdx = sortedBlds.indexOf(st.open);
+    const prevBld = currentIdx > 0 ? sortedBlds[currentIdx - 1] : null;
+    const nextBld = currentIdx < sortedBlds.length - 1 ? sortedBlds[currentIdx + 1] : null;
+
+    html += `
+	
+	
+	      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+      <button class="btn ghost sm" data-nav="prev" ${prevBld ? '' : 'disabled'} style="flex:1; margin-left:5px;">⏩    السابق</button>
+      <button class="btn ghost sm" data-nav="next" ${nextBld ? '' : 'disabled'} style="flex:1; margin-right:5px;"> التالي    ⏪</button>
+    </div>
+	
+	
+	
+	
+	
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+       
+	   <h2 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">عمارة ${st.open} <span style="font-size: 16px; color: var(--ember); font-weight: 800;">(${money(tot(aa).value)} ج)</span></h2>
+	   
+	   
+	   
+	   
+        <label class="chk"><input type="checkbox" id="selectAllApts" ${aa.length > 0 && aa.every(s => st.sel.has(key(s))) ? 'checked' : ''}> تحديد الكل</label>
+      </div>
+	  
+	  
+	  
+      ${ov.v.html}
+      ${ov.v.barHtml}
+    </div>`;
   } else {
     Object.keys(g).sort(srt).forEach(b => {
       const x = tot(g[b]);
@@ -342,42 +485,36 @@ export async function renderHome(el){
       }
       const cells = `<b>عمارة ${b}</b><span>${x.n} شقة</span><span>${x.count} فاتورة</span><strong>${money(x.value)}</strong>`;
       html += `<div class="brow prow ${o?'open':''} ${hiClass}" data-b="${b}" role="button" tabindex="0">${cells}</div>`;
-      if (o){
-        st.bld = b;
-        const aa = g[b].sort((p,q) => srt(p.apt, q.apt));
-        ov = {a: aa, v: aptsView(aa)};
-        html += `<div class="card apts">${ov.v.html}</div>`;
-      }
     });
   }
 
-  el.innerHTML = html + '</div>' + (ov ? bar(ov.v) : '');
+  el.innerHTML = html + '</div>';
 
   /* ===== ربط الأحداث ===== */
+  const mainSearchBtn = el.querySelector('#mainSearchBtn');
+  if (mainSearchBtn) {
+    mainSearchBtn.onclick = () => {
+      document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('on'));
+      const ev = new CustomEvent('openTab', {detail:{tab:'searchFromHome'}});
+      window.dispatchEvent(ev);
+    };
+  }
+
   el.querySelector('#sSec').onchange = e => { st.sector = e.target.value; st.open = null; renderHome(el); };
   el.querySelector('#sBlk').onchange = e => { st.blk = e.target.value; st.open = null; renderHome(el); };
-
-  const bldIn = el.querySelector('#bldIn');
-
-  // وضع "فتح العمارة"
-  el.querySelector('#modeOpen').onclick = () => {
-    const v = String(bldIn.value || '').trim();
-    if (!v){ toast('أدخل رقم العمارة أولاً'); return; }
-    if (g[v]){ st.open = v; st.bld = v; renderHome(el); }
-    else {
-      const inPaid = st.S.some(s => s.sector===st.sector && s.blk===st.blk && s.bld===v && st.paid.has(key(s)));
-      if (inPaid) toast('العمارة مسددة بالكامل');
-      else toast('لا توجد في السجلات');
-    }
-  };
-
-  // وضع "عرض القائمة"
-  el.querySelector('#modeList').onclick = () => {
-    st.open = null;
-    bldIn.value = '';
+  
+  el.querySelector('#sBld').onchange = e => {
+    const v = e.target.value;
+    if (v) { st.open = v; st.bld = v; } else { st.open = null; }
     renderHome(el);
   };
 
+  el.querySelector('#modeList').onclick = () => {
+    st.open = null;
+    renderHome(el);
+  };
+
+  const bldIn = el.querySelector('#bldIn');
   bldIn.addEventListener('input', () => {
     if (bldIn.value.length === 2){
       const v = bldIn.value;
@@ -386,6 +523,7 @@ export async function renderHome(el){
         const inPaid = st.S.some(s => s.sector===st.sector && s.blk===st.blk && s.bld===v && st.paid.has(key(s)));
         if (inPaid) toast('العمارة مسددة بالكامل');
         else toast('لا توجد في السجلات');
+        bldIn.value = '';
       }
     }
   });
@@ -399,18 +537,57 @@ export async function renderHome(el){
     };
   });
 
+
+
+
+
+
+
+
+  el.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.onclick = () => {
+      const dir = btn.dataset.nav;
+      // تصفية العمارات: نأخذ فقط العمارات التي تحتوي على شقق غير مسددة (قيمتها > 0)
+      const validBlds = Object.keys(g).filter(b => 
+        g[b].some(s => !st.paid.has(key(s))) 
+      ).sort((a,b) => Number(a) - Number(b));
+      
+      const currentIdx = validBlds.indexOf(st.open);
+      let target = null;
+      if (dir === 'prev' && currentIdx > 0) target = validBlds[currentIdx - 1];
+      if (dir === 'next' && currentIdx < validBlds.length - 1) target = validBlds[currentIdx + 1];
+      
+      if (target) {
+        st.open = target;
+        st.bld = target;
+        renderHome(el);
+      } else {
+        // إذا لم يجد تالياً أو سابقاً، يظهر رسالة
+        toast(dir === 'next' ? 'لا توجد عمارات تالية غير مسددة' : 'لا توجد عمارات سابقة غير مسددة');
+      }
+    };
+  });
+  
+  
+  
+  
+  
+  
+
+  const selectAllCb = el.querySelector('#selectAllApts');
+  if (selectAllCb && ov) {
+    selectAllCb.onchange = (e) => {
+      if (e.target.checked) {
+        ov.a.forEach(s => st.sel.add(key(s)));
+      } else {
+        st.sel.clear();
+      }
+      renderHome(el);
+    };
+  }
+
   if (ov) bind(el, ov.a, ov.v, () => renderHome(el));
   scrollTo(0, y);
-}
-
-/* ===== صفحة العمارة ===== */
-export function renderBuilding(el){
-  back(true);
-  const a = work().filter(s => s.sector===st.sector && s.blk===st.blk && s.bld===st.bld).sort((p,q) => srt(p.apt, q.apt));
-  if (!a.length) return history.back();
-  const v = aptsView(a);
-  el.innerHTML = `<div class="card">${v.html}</div>${bar(v)}`;
-  bind(el, a, v, () => renderBuilding(el));
 }
 
 /* ===== صفحة ما تم تحصيله ===== */
@@ -449,7 +626,7 @@ export async function renderLedger(el, reload, exp){
             <button class="menu-dots" data-m="${x.id}" type="button" aria-label="خيارات">⋮</button>
             <div class="menu-pop" data-pop="${x.id}" hidden>
               ${canUndo(x)?`<button data-act="undo" data-id="${x.id}" type="button">تراجع</button>`:''}
-              <button data-act="print" data-id="${x.id}" type="button">طباعة فاتورة</button>
+              <button data-act="print" data-id="${x.id}" type="button">إعادة طباعة</button>
               ${(s.value||0) === 0 ? `<button data-act="advance" data-id="${x.id}" type="button">سداد مقدم</button>` : ''}
             </div>
           </div>
@@ -485,15 +662,30 @@ export async function renderLedger(el, reload, exp){
           renderLedger(el, reload, exp);
         }
       }
-      if (act === 'print'){
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	        if (act === 'print'){
+        // إضافة علامة الطباعة لمنع التراجع مستقبلاً
+        await put('ledger', entry.id, { ...entry, printed: true });
+        
         const s = st.by.get(entry.key) || {};
         const q = new URLSearchParams({
           n: s.name||'', s: s.sector||'', b: s.blk||'', d: s.bld||'', a: s.apt||'',
           v: s.value||0, r: st.adv.get(entry.key)||0, q: entry.due||s.value||0,
           c: s.count||0, m: st.cycle, u: st.who, k: entry.key
         }).toString();
-        openPage('print.html', q);
+                openPage('print.html', q + '&reprint=1');
       }
+ 
+	  
+	  
+	  
+	  
       if (act === 'advance'){
         const s = st.by.get(entry.key);
         if (!s) return;

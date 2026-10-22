@@ -14,13 +14,18 @@ const $ = id => document.getElementById(id);
 const view = $('view');
 let tab = 'home';
 
+
 const R = {
   home: () => renderHome(view),
   ledger: () => renderLedger(view, reload, doExport),
   search: () => renderSearch(view),
+  searchAll: () => renderSearch(view, true),
+  searchFromHome: () => renderSearch(view, true, true), // إضافة وضع البحث من الصفحة الرئيسية
   archive: () => renderArchive(view),
   details: () => renderDetails(view, () => show('home'))
 };
+
+
 
 function show(t){
   tab = t;
@@ -177,6 +182,16 @@ if ('serviceWorker' in navigator){
 
 $('menuBtn').onclick = e => { e.stopPropagation(); $('menu').hidden = !$('menu').hidden; };
 document.addEventListener('click', () => { $('menu').hidden = true; });
+
+
+// استرجاع الوضع الداكن المحفوظ
+const savedTheme = localStorage.getItem('app-theme');
+if (savedTheme === 'dark') {
+  document.body.setAttribute('data-theme', 'dark');
+}
+
+
+
 
 console.log('[app] started');
 boot();

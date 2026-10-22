@@ -959,3 +959,147 @@ dialog.viewer iframe{
   font-size: 1rem;
 }
 
+
+
+
+
+
+
+/* ============================================================
+   التصميم الجديد لبطاقة الشقة (سطرين)
+   ============================================================ */
+.apt-card {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 8px 10px !important;
+  gap: 6px !important;
+  border-radius: 10px !important;
+}
+
+/* الصف الأول: الاسم + المبلغ */
+.apt-card .apt-row-1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+
+.apt-card .apt-row-1 .apt-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink, #0f2438);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.apt-card .apt-row-1 .apt-val-btn {
+  background: color-mix(in srgb, var(--ember) 12%, var(--card));
+  border: 1.5px solid var(--ember);
+  color: var(--ember);
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 4px 8px;
+  min-width: 60px;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+  direction: ltr;
+  transition: background .2s, transform .12s;
+}
+.apt-card .apt-row-1 .apt-val-btn:active {
+  transform: scale(.95);
+}
+
+/* الصف الثاني: الشقة + العدد + الشيك بوكس + زر القائمة */
+.apt-card .apt-row-2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.apt-card .apt-row-2 .apt-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.apt-card .apt-row-2 .apt-apt-box {
+  background: var(--collector);
+  color: #fff;
+  font-weight: 800;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 13px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.apt-card .apt-row-2 .apt-count {
+  font-size: 12px;
+  color: var(--mute);
+  font-weight: 600;
+}
+
+.apt-card .apt-row-2 .apt-chk {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.apt-card .apt-row-2 .apt-menu-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ============================================================
+   تلوين متبادل للشقق (فردي / زوجي)
+   ============================================================ */
+.apt-card[data-apt-odd="1"] {
+  background-color: #ffffff !important;
+}
+.apt-card[data-apt-odd="0"] {
+  background-color: #f1f5f9 !important; /* رمادي فاتح جداً */
+}
+
+/* ============================================================
+   الوضع الداكن (Dark Mode)
+   ============================================================ */
+body[data-theme="dark"] {
+  --paper: #0f172a;
+  --paper-2: #1e293b;
+  --card: #1e293b;
+  --line: #334155;
+  --ink: #f1f5f9;
+  --mute: #94a3b8;
+  --soft: #64748b;
+  --collector: #818cf8;
+  --ember: #fbbf24;
+  --ok: #34d399;
+  --bad: #f87171;
+}
+
+body[data-theme="dark"] .apt-card[data-apt-odd="1"] {
+  background-color: #1e293b !important;
+}
+body[data-theme="dark"] .apt-card[data-apt-odd="0"] {
+  background-color: #0f172a !important;
+}
+
+body[data-theme="dark"] .top,
+body[data-theme="dark"] .tabs {
+  background: linear-gradient(135deg, #0b1120, #1e293b);
+}
+
+body[data-theme="dark"] .apt-card .apt-row-1 .apt-val-btn {
+  background: color-mix(in srgb, var(--ember) 20%, var(--card));
+  color: var(--ember);
+}

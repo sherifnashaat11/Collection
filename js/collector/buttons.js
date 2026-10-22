@@ -1,6 +1,15 @@
 import {get} from '../core/db.js';
 import {isOn, enable, disable, verify} from './lock.js';
 import {openExportDialog} from './exportExcel.js';
+// دالة إشعار محلية بسيطة
+function showToast(msg) {
+  alert(msg);
+}
+
+
+
+
+
 
 const ok = f => /^https:\/\//.test(f) || /^[\w.-]+\.html?$/.test(f);
 
@@ -54,6 +63,19 @@ export async function renderMenu(){
   
   // تصدير Excel
   html += `<button type="button" data-export="1">📊 تصدير Excel (غير المسددين)</button>`;
+   // البحث خارج النطاق
+  html += `<button type="button" data-search-all="1">🔍 بحث خارج النطاق</button>`;
+
+  // تبديل الوضع الداكن
+  const isDark = document.body.getAttribute('data-theme') === 'dark';
+  html += `<button type="button" data-theme-toggle="1">${isDark ? '☀️ الوضع الفاتح' : '🌙 الوضع الداكن'}</button>`;
+
+
+
+
+
+
+
 
   html += '<hr>';
 
@@ -98,6 +120,51 @@ export async function renderMenu(){
     m.hidden = true;
     openExportDialog();
   };
+
+    // زر البحث خارج النطاق
+  const btnSearchAll = m.querySelector('[data-search-all]');
+  if (btnSearchAll) {
+    btnSearchAll.onclick = () => {
+      m.hidden = true;
+      document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('on'));
+      const ev = new CustomEvent('openTab', {detail:{tab:'searchAll'}});
+      window.dispatchEvent(ev);
+    };
+  }
+
+  // تبديل الوضع الداكن
+  const btnTheme = m.querySelector('[data-theme-toggle]');
+  if (btnTheme) {
+    btnTheme.onclick = () => {
+      m.hidden = true;
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+
+
+
+      if (isDark) {
+        document.body.removeAttribute('data-theme');
+        localStorage.setItem('app-theme', 'light');
+        showToast('تم تفعيل الوضع الفاتح');
+      } else {
+        document.body.setAttribute('data-theme', 'dark');
+        localStorage.setItem('app-theme', 'dark');
+        showToast('تم تفعيل الوضع الداكن');
+      }
+
+
+
+
+      // إعادة رسم الصفحة الحالية لتطبيق الألوان
+      renderMenu(); 
+      document.querySelector('#tabs button.on')?.click();
+    };
+  }
+
+
+
+
+
+
 
   // الواجهات الإضافية من الأدمن
   m.querySelectorAll('[data-f]').forEach(btn => {
