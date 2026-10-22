@@ -1,15 +1,23 @@
-const CACHE = 'collect-v28';
+const CACHE = 'collect-v1';
 const SHELL = [
-  './','index.html','login.html','manifest.json','gas_Calculator.html',
-  'css/base.css','css/components.css','css/collector.css',
-  'js/core/config.js','js/core/compress.js','js/core/crypto.js','js/core/db.js','js/core/normalize.js','js/core/utils.js',
-  'js/collector/app.js','js/collector/unlock.js','js/collector/fileLoader.js','js/collector/browse.js',
-  'js/collector/payment.js','js/collector/ledger.js','js/collector/lock.js','js/collector/monthly.js',
-  'js/collector/exportExcel.js','js/collector/snapshots.js',
-  'pages/print.html','pages/reading.html',
-  'js/collector/search.js','js/collector/personal.js','js/collector/export.js','js/collector/reconcile.js',
-  'js/collector/updateCheck.js','js/collector/buttons.js','js/collector/details.js','js/collector/names.js',
-  'icons/icon-192.png','icons/icon-512.png'
+  './',
+  'index.html',
+  'login.html',
+  'gas_Calculator.html',
+  'css/base.css',
+  'css/components.css',
+  'css/collector.css',
+  'js/collector/app.js',
+  'js/collector/browse.js',
+  'js/collector/search.js',
+  'js/collector/buttons.js',
+  'js/collector/ledger.js',
+  'js/collector/lock.js',
+  'js/collector/updateCheck.js',
+  'pages/print.html',
+  'pages/reading.html',
+  'icons/icon-192.png',
+  'icons/icon-512.png'
 ];
 
 self.addEventListener('install', function(e){
@@ -22,8 +30,6 @@ self.addEventListener('activate', function(e){
     var keys = await caches.keys();
     await Promise.all(keys.filter(function(k){ return k !== CACHE; }).map(function(k){ return caches.delete(k); }));
     await self.clients.claim();
-    var cs = await self.clients.matchAll({type: 'window'});
-    cs.forEach(function(c){ c.postMessage({type: 'RELOAD'}); });
   })());
 });
 
