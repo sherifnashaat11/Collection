@@ -686,7 +686,7 @@ export async function renderLedger(el, reload, exp){
 	  
 	  
 	  
-      if (act === 'advance'){
+           if (act === 'advance'){
         const s = st.by.get(entry.key);
         if (!s) return;
         if ((s.value||0) > 0){ toast('لا يمكن السداد المقدم لعميل ما زال عليه مديونية'); return; }
@@ -700,6 +700,47 @@ export async function renderLedger(el, reload, exp){
       }
     };
   });
+
+  // ===== إضافة أرشيف السداد المقدم =====
+  const advanceClients = [];
+  st.adv.forEach((balance, k) => {
+    if (balance > 0) {
+      const s = st.by.get(k);
+      if (s) advanceClients.push({ ...s, advanceBalance: balance });
+    }
+  });
+  
+  if (advanceClients.length > 0) {
+    advanceClients.sort((a, b) => b.advanceBalance - a.advanceBalance);
+    
+    let advHtml = `
+      <div class="card" style="margin-top: 15px; border: 1.5px solid var(--advance, #7c3aed); border-radius: var(--r-lg);">
+        <h2 style="color: var(--advance, #7c3aed);">💰 أرشيف السداد المقدم</h2>
+        <div class="ledger-list">
+    `;
+    
+    advanceClients.forEach(s => {
+      advHtml += `
+        <div class="led-row" style="border-inline-start-color: var(--advance, #7c3aed);">
+          <div class="led-main">
+            <span class="led-apt" style="background: var(--advance, #7c3aed);">${s.apt || '?'}</span>
+            <div class="led-info">
+              <div class="led-name">${esc(s.name || 'بدون اسم')}</div>
+              <div class="led-meta">قطاع ${s.sector||''} · بلوك ${s.blk||''} · عمارة ${s.bld||''}</div>
+            </div>
+            <div class="led-right">
+              <div class="led-tags"><span class="tag" style="background: var(--advance, #7c3aed); color: #fff;">مقدم</span></div>
+              <div class="led-amount" style="color: var(--advance, #7c3aed);">${money(s.advanceBalance)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    advHtml += `</div></div>`;
+    el.insertAdjacentHTML('beforeend', advHtml);
+  }
+
   el.querySelector('#rl').onclick = reload;
   el.querySelector('#ex').onclick = exp;
 }
