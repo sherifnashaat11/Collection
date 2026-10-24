@@ -1,9 +1,10 @@
-const CACHE = 'collect-v1';
-const SHELL = [
+const CACHE_NAME = 'collect-v1';
+const ASSETS = [
   './',
   'index.html',
   'login.html',
   'gas_Calculator.html',
+  'manifest.json',
   'css/base.css',
   'css/components.css',
   'css/collector.css',
@@ -20,40 +21,52 @@ const SHELL = [
   'icons/icon-512.png'
 ];
 
-self.addEventListener('install', function(e){
+// 1. التثبيت: تخزين جميع الملفات
+self.addEventListener('install', (e) => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(SHELL); }).catch(function(){}));
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS);
+    })
+  );
 });
 
-self.addEventListener('activate', function(e){
-  e.waitUntil((async function(){
-    var keys = await caches.keys();
-    await Promise.all(keys.filter(function(k){ return k !== CACHE; }).map(function(k){ return caches.delete(k); }));
-    await self.clients.claim();
-  })());
+// 2. التنشيط: حذف الكاش القديم
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
-self.addEventListener('message', function(e){
-  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
-});
+// 3. الجلب: استراتيجية Network First (الشبكة أولاً، ثم الكاش)
+self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
 
-self.addEventListener('fetch', function(e){
-  var u = new URL(e.request.url);
-  if (e.request.method !== 'GET' || u.origin !== location.origin) return;
-  if (u.pathname.indexOf('/data/') >= 0 || u.pathname.endsWith('version.json')){
-    e.respondWith(fetch(e.request, {cache: 'no-store'}));
-    return;
-  }
-  e.respondWith((async function(){
-    var cached = await caches.match(e.request);
-    if (cached) return cached;
-    try{
-      var r = await fetch(e.request);
-      var c = r.clone();
-      caches.open(CACHE).then(function(x){ return x.put(e.request, c); });
-      return r;
-    }catch(err){
-      return caches.match('index.html');
-    }
-  })());
+  e.respondWith(
+    fetch(e.request)
+      .then((res) => {
+        // إذا نجح الاتصال، قم بتخزين النسخة الجديدة
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(e.request, resClone);
+        });
+        return res;
+      })
+      .catch(() => {
+        // إذا فشل الاتصال (بدون إنترنت)، ابحث في الكاش
+        return caches.match(e.request).then((cachedRes) => {
+          if (cachedRes) return cachedRes;
+          // إذا لم يجد الملف في الكاش، أعد صفحة index.html
+          return caches.match('index.html');
+        });
+      })
+  );
 });
