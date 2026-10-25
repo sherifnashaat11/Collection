@@ -424,9 +424,9 @@ export async function renderHome(el){
     html += `</div></div>`;
   }
 
-  html += `
+   html += `
   <div style="margin-top: 15px;">
-    <button class="btn ghost" id="mainSearchBtn" style="width: 100%; font-size: 14px; background: var(--collector-soft); color: var(--collector);">🔍 بحث خارج النطاق (شامل)</button>
+    <button class="btn ghost" id="mainSearchBtn" style="width: 100%; font-size: 14px; background: var(--collector-soft); color: var(--collector);">🔍 بحث شامل</button>
   </div>
   `;
 
