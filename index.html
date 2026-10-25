@@ -23,9 +23,22 @@
     <h1>محصّل الغاز</h1>
     <p id="who">جارٍ التحقق…</p>
   </span>
+  /*
   <span class="pill" id="net">…</span>
   <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
   <button class="ico power-btn" aria-label="خروج" onclick="window.close();" style="font-size: 22px; margin-inline-start: 5px;">⏻</button>
+  */
+
+
+  <span class="pill" id="net">…</span>
+  <button class="ico" id="ledgerBtn" aria-label="ما تم تحصيله" title="ما تم تحصيله" onclick="document.querySelector('#tabs button[data-t=\'ledger\']').click();" style="font-size: 20px;">✅</button>
+  <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
+  <button class="ico power-btn" aria-label="خروج" onclick="window.close();" style="font-size: 22px; margin-inline-start: 5px;">⏻</button>
+
+
+
+
+  
 </div></header>
 
 <div id="menu" class="menu" hidden></div>
@@ -57,13 +70,13 @@
 <main id="app" hidden>
   <section id="view"></section>
 </main>
-
+/*
 <nav class="tabs" id="tabs" hidden>
   <button data-t="home" class="on"><span class="ico-emoji">📋</span>التحصيل</button>
   <button data-t="ledger"><span class="ico-emoji">✅</span>ما تم تحصيله</button>
   <button data-t="search"><span class="ico-emoji">🔍</span>بحث</button>
 </nav>
-
+*/
 <footer class="app-footer" id="footer" hidden>
   <span>تطوير: <b>شريف نشأت</b></span>
   <span> · </span>
