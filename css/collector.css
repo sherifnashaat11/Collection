@@ -1103,3 +1103,21 @@ body[data-theme="dark"] .apt-card .apt-row-1 .apt-val-btn {
   background: color-mix(in srgb, var(--ember) 20%, var(--card));
   color: var(--ember);
 }
+
+
+
+/* جعل التطبيق يأخذ الشاشة كاملة (Full Screen) */
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overscroll-behavior-y: none; /* منع السحب لأسفل لتحديث الصفحة */
+  user-select: none; /* منع تحديد النصوص عند السحب */
+}
+
+/* منع ظهور شريط التمرير المزعج */
+body::-webkit-scrollbar { display: none; }
+body { -ms-overflow-style: none; scrollbar-width: none; }
+
+
