@@ -1120,4 +1120,49 @@ html, body {
 body::-webkit-scrollbar { display: none; }
 body { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* تنسيق زر الطاقة */
+.power-btn {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.power-btn:hover { background: rgba(255, 255, 255, 0.3); }
 
+/* إصلاح القائمة المنسدلة (⋮) لتكون في أقصى اليمين */
+.menu {
+  top: 70px;
+  inset-inline-end: 10px; /* بدلاً من inset-inline-start */
+  left: auto !important;
+}
+
+/* الكارت السفلي الجديد (خط مضيء فقط) */
+.tabs {
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-around;
+  padding: 0;
+  height: 20px; /* ارتفاع صغير جداً */
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+.tabs button {
+  flex: 1;
+  background: none;
+  border: none;
+  border-top: 4px solid transparent; /* الخط المضيء */
+  color: transparent; /* إخفاء النص */
+  padding: 0;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+.tabs button.on {
+  border-top-color: var(--collector); /* لون الخط المضيء */
+}
+/* إخفاء الأيقونات القديمة */
+.tabs button .ico-emoji { display: none; }
