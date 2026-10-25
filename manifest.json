@@ -2,8 +2,8 @@
   "name": "محصّل الغاز",
   "short_name": "التحصيل",
   "description": "تطبيق تحصيل مديونية الغاز - يعمل بدون إنترنت",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/Collection/",
+  "scope": "/Collection/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f2438",
@@ -14,25 +14,25 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "/Collection/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "/Collection/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-192.png",
+      "src": "/Collection/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "/Collection/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -42,14 +42,14 @@
     {
       "name": "التحصيل",
       "short_name": "التحصيل",
-      "url": "/",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "url": "/Collection/",
+      "icons": [{ "src": "/Collection/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "ما تم تحصيله",
       "short_name": "الأرشيف",
-      "url": "/#ledger",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "url": "/Collection/#ledger",
+      "icons": [{ "src": "/Collection/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }
