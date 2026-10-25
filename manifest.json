@@ -4,7 +4,7 @@
   "description": "تطبيق تحصيل مديونية الغاز - يعمل بدون إنترنت",
   "start_url": "/Collection/",
   "scope": "/Collection/",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#0f2438",
   "theme_color": "#0f766e",
