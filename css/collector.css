@@ -1188,4 +1188,4 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
 
-
+#tabs { display: none !important; }
