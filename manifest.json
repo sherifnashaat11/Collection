@@ -43,13 +43,25 @@
       "name": "التحصيل",
       "short_name": "التحصيل",
       "url": "/Collection/",
-      "icons": [{ "src": "/Collection/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/Collection/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "ما تم تحصيله",
       "short_name": "الأرشيف",
       "url": "/Collection/#ledger",
-      "icons": [{ "src": "/Collection/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/Collection/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
