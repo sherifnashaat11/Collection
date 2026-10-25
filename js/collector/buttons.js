@@ -1,17 +1,11 @@
-import {get} from '../core/db.js';
-import {isOn, enable, disable, verify} from './lock.js';
-import {openExportDialog} from './exportExcel.js';
-// دالة إشعار محلية بسيطة
-function showToast(msg) {
-  alert(msg);
-}
-
-
-
+import { get } from '../core/db.js';
+import { isOn, enable, disable, verify } from './lock.js';
+import { openExportDialog } from './exportExcel.js';
+import { toast } from './browse.js';
 
 const ok = f => /^https:\/\//.test(f) || /^[\w.-]+\.html?$/.test(f);
 
-// التعديل هنا: إذا كان الملف gas_Calculator.html يفتح من الروت، وإلا من مجلد pages
+// دالة لمعرفة مسار الملف (إذا كان في الروت أو في مجلد pages)
 const url = f => {
   if (/^https:/.test(f)) return f;
   if (f.startsWith('gas_') || f === 'index.html') return f;
@@ -61,19 +55,13 @@ export async function renderMenu(){
   
   // تصدير Excel
   html += `<button type="button" data-export="1">📊 تصدير Excel (غير المسددين)</button>`;
-   // البحث خارج النطاق
-  html += `<button type="button" data-search-all="1">🔍 بحث خارج النطاق</button>`;
 
-  // تبديل الوضع الداكن
+  // زر البحث الشامل (الموحد)
+  html += `<button type="button" data-full-search="1">🔍 بحث شامل</button>`;
+
+  // زر الوضع الداكن
   const isDark = document.body.getAttribute('data-theme') === 'dark';
   html += `<button type="button" data-theme-toggle="1">${isDark ? '☀️ الوضع الفاتح' : '🌙 الوضع الداكن'}</button>`;
-
-
-
-
-
-
-
 
   html += '<hr>';
 
@@ -82,12 +70,9 @@ export async function renderMenu(){
     html += `<button type="button" data-f="${esc(x.file)}">${esc(x.name)}</button>`;
   });
 
-  // أزرار ثابتة
-  html += '<hr>';
-  html += '<button type="button" data-archive="1">📚 الأرشيف</button>';
-  html += '<button type="button" data-details="1">📋 التفاصيل</button>';
-
   m.innerHTML = html;
+
+  // ===== ربط الأحداث =====
 
   // زر القفل
   m.querySelector('[data-lock]').onclick = async () => {
@@ -119,68 +104,37 @@ export async function renderMenu(){
     openExportDialog();
   };
 
-    // زر البحث خارج النطاق
-  const btnSearchAll = m.querySelector('[data-search-all]');
-  if (btnSearchAll) {
-    btnSearchAll.onclick = () => {
+  // زر البحث الشامل
+  const btnFullSearch = m.querySelector('[data-full-search]');
+  if (btnFullSearch) {
+    btnFullSearch.onclick = () => {
       m.hidden = true;
-      document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('on'));
-      const ev = new CustomEvent('openTab', {detail:{tab:'searchAll'}});
-      window.dispatchEvent(ev);
+      document.querySelector('#tabs button[data-t="search"]').click();
     };
   }
 
-  // تبديل الوضع الداكن
+  // زر الوضع الداكن
   const btnTheme = m.querySelector('[data-theme-toggle]');
   if (btnTheme) {
     btnTheme.onclick = () => {
       m.hidden = true;
       const isDark = document.body.getAttribute('data-theme') === 'dark';
-
-
-
       if (isDark) {
         document.body.removeAttribute('data-theme');
         localStorage.setItem('app-theme', 'light');
-        showToast('تم تفعيل الوضع الفاتح');
+        toast('تم تفعيل الوضع الفاتح');
       } else {
         document.body.setAttribute('data-theme', 'dark');
         localStorage.setItem('app-theme', 'dark');
-        showToast('تم تفعيل الوضع الداكن');
+        toast('تم تفعيل الوضع الداكن');
       }
-
-
-
-
       // إعادة رسم الصفحة الحالية لتطبيق الألوان
-      renderMenu(); 
       document.querySelector('#tabs button.on')?.click();
     };
   }
-
-
-
-
-
-
 
   // الواجهات الإضافية من الأدمن
   m.querySelectorAll('[data-f]').forEach(btn => {
     btn.onclick = () => { m.hidden = true; openPage(btn.dataset.f); };
   });
-
-  // الأرشيف والتفاصيل
-  m.querySelector('[data-archive]').onclick = () => {
-    m.hidden = true;
-    document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('on'));
-    const ev = new CustomEvent('openTab', {detail:{tab:'archive'}});
-    window.dispatchEvent(ev);
-  };
-
-  m.querySelector('[data-details]').onclick = () => {
-    m.hidden = true;
-    document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('on'));
-    const ev = new CustomEvent('openTab', {detail:{tab:'details'}});
-    window.dispatchEvent(ev);
-  };
 }
