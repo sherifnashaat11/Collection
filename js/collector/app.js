@@ -246,3 +246,46 @@ document.addEventListener('touchend', (e) => {
 
 console.log('[app] started');
 boot();
+/* ===== دعم إيماءات السحب للرجوع (Swipe Right) ===== */
+let touchStartX = 0;
+let touchStartY = 0;
+const minSwipeDistance = 100;
+
+document.addEventListener('touchstart', (e) => {
+  if (e.target.closest('input, textarea, select')) return;
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+  if (e.target.closest('input, textarea, select')) return;
+  const touchEndX = e.changedTouches[0].screenX;
+  const touchEndY = e.changedTouches[0].screenY;
+  const distanceX = touchEndX - touchStartX;
+  const distanceY = touchEndY - touchStartY;
+
+  if (Math.abs(distanceX) > minSwipeDistance && Math.abs(distanceY) < 60) {
+    if (distanceX > 0) { // سحب لليمين (رجوع)
+      // إغلاق أي نافذة مفتوحة
+      const openDialog = document.querySelector('dialog[open]');
+      if (openDialog) { openDialog.close(); openDialog.remove(); return; }
+      
+      // الرجوع للتبويب الرئيسي إذا كنا في تبويب آخر
+      const activeTab = document.querySelector('#tabs button.on');
+      if (activeTab && activeTab.dataset.t !== 'home') {
+        document.querySelector('#tabs button[data-t="home"]').click();
+        return;
+      }
+      
+      // إغلاق العمارة إذا كنا داخلها (في الصفحة الرئيسية)
+      const backBtn = document.getElementById('back');
+      if (backBtn && !backBtn.hidden) {
+        history.back();
+      } else if (typeof st !== 'undefined' && st.open) {
+        st.open = null;
+        st.sel.clear();
+        if (typeof renderHome === 'function') renderHome(document.getElementById('view'));
+      }
+    }
+  }
+}, { passive: true });
