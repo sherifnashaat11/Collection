@@ -1166,3 +1166,26 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
 }
 /* إخفاء الأيقونات القديمة */
 .tabs button .ico-emoji { display: none; }
+
+
+
+
+/* إزالة الخلفية الداكنة من الشريط السفلي */
+.tabs {
+  background: transparent !important; /* إزالة الخلفية */
+  box-shadow: none !important;        /* إزالة الظل القديم */
+  border-top: none !important;        /* إزالة الخط العلوي */
+  padding-bottom: env(safe-area-inset-bottom); /* دعم شاشات الآيفون */
+}
+
+/* الحفاظ على وضوح الأزرار */
+.tabs button {
+  background: rgba(255, 255, 255, 0.85); /* خلفية شبه شفافة للزر نفسه */
+  margin: 0 2px;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1); /* ظل خفيف جداً */
+  padding: 8px 2px;
+}
+
+
+
