@@ -13,11 +13,12 @@
 <link rel="stylesheet" href="css/collector.css">
 </head>
 <body>
-
+//
 <header class="top"><div>
   <button id="back" class="ico" aria-label="رجوع" onclick="history.back()" style="display:none; font-size: 24px;">➡️</button>
   <svg viewBox="0 0 48 48" aria-hidden="true">
-    <!-- الأيقونة -->
+    <path d="M24 3c3 9 14 13 14 26a14 14 0 0 1-28 0c0-6 3-9 6-12 0 5 3 7 5 7-2-8 0-15 3-21z" fill="#f2a516"/>
+    <path d="M24 24c2 4 7 6 7 12a7 7 0 0 1-14 0c0-4 4-6 7-12z" fill="#1e6fa8"/>
   </svg>
   <span style="flex: 1;">
     <h1>محصّل الغاز</h1>
@@ -25,9 +26,9 @@
   </span>
   <span class="pill" id="net">…</span>
   <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
-  <button class="ico" aria-label="خروج" onclick="window.close();" style="font-size: 20px; color: #ff6b6b; margin-inline-start: 5px;">✕</button>
+  <button class="ico power-btn" aria-label="خروج" onclick="window.close();" style="font-size: 22px; margin-inline-start: 5px;">⏻</button>
 </div></header>
-
+//
 <div id="menu" class="menu" hidden></div>
 
 <main id="locked">
