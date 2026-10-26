@@ -8,6 +8,16 @@ import { choose } from './personal.js';
 import { monthOptions } from './monthly.js';
 import { searchKey } from '../core/normalize.js';
 
+
+
+
+
+export function setFilter(f){ st.filter = f; }
+export function clearFilter(){ st.filter = null; }
+
+
+
+
 export const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 export const st = {
