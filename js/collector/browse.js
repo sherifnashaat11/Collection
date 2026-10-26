@@ -8,16 +8,6 @@ import { choose } from './personal.js';
 import { monthOptions } from './monthly.js';
 import { searchKey } from '../core/normalize.js';
 
-
-
-
-
-export function setFilter(f){ st.filter = f; }
-export function clearFilter(){ st.filter = null; }
-
-
-
-
 export const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 export const st = {
@@ -32,6 +22,9 @@ const num = s => +String(s||'').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.
 const due = s => Math.max(0, s.value - (st.adv.get(key(s))||0));
 const tot = a => totals(a, due);
 const fz = s => searchKey(s).replace(/[خج]/g, 'ح').replace(/ذ/g, 'د');
+
+export function setFilter(f){ st.filter = f; }
+export function clearFilter(){ st.filter = null; }
 
 export async function refresh(){
   const mn = await getManual();
@@ -56,7 +49,6 @@ export const toast = t => {
   e._t = setTimeout(() => { e.className = ''; }, 2600);
 };
 
-/* ===== دالة تأكيد الطباعة ===== */
 function askPrint(entries) {
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -90,7 +82,6 @@ function askPrint(entries) {
   });
 }
 
-/* ===== تصميم بطاقات الشقق ===== */
 function aptsView(a){
   const ch = a.filter(s => st.sel.has(key(s)));
   const ct = tot(ch);
@@ -159,7 +150,6 @@ function aptsView(a){
   return {html: cards, ch, ct, allTot, barHtml};
 }
 
-/* ===== ربط أحداث الشقق ===== */
 function bind(el, a, v, again){
   el.querySelectorAll('[data-k]').forEach(c => {
     c.onchange = () => { c.checked ? st.sel.add(c.dataset.k) : st.sel.delete(c.dataset.k); again(); };
@@ -248,7 +238,6 @@ function bind(el, a, v, again){
   };
 }
 
-/* ===== السداد الجزئي ===== */
 function partialDialog(s){
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -308,13 +297,9 @@ function partialDialog(s){
   });
 }
 
-/* ===== الصفحة الرئيسية ===== */
 export async function renderHome(el){
   const y = scrollY;
-  let currentMode = 'list'; // تعريف المتغير هنا
-
-
-  
+  let currentMode = 'list';
   const w = work();
   if (!st.S.length){
     el.innerHTML = '<div class="empty">لا توجد بيانات بعد. اضغط «تحديث الملف» من تبويب «ما تم تحصيله».</div>';
@@ -416,7 +401,6 @@ export async function renderHome(el){
 
   el.innerHTML = html;
 
-  /* ربط الأحداث */
   const searchPanel = el.querySelector('#searchPanel');
   const nameWrap = el.querySelector('#searchNameWrap');
   const codeWrap = el.querySelector('#searchCodeWrap');
@@ -542,7 +526,6 @@ export async function renderHome(el){
   scrollTo(0, y);
 }
 
-/* ===== صفحة ما تم تحصيله ===== */
 export async function renderLedger(el, reload, exp){
   await refresh();
   const e = await list();
