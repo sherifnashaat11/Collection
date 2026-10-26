@@ -11,9 +11,6 @@ const tbl = (h,r)=>`<div class="wrap"><table><tr>${h.map(x=>`<th>${x}</th>`).joi
 const who = e=>{ const s = st.by.get(e.key)||{}; return `${esc(s.name||'بدون اسم')} (${s.sector||''}-${s.blk||''}-${s.bld||''}-${s.apt||''})`; };
 const kind = e=>e.type==='advance'?'مقدم':(e.personal?'شخصي':(e.partial?'جزئي':'سداد'));
 
-/* ============================================================
-   صفحة الأرشيف
-   ============================================================ */
 export async function renderArchive(el){
   await refresh();
   const e = await list();
@@ -50,9 +47,6 @@ export async function renderArchive(el){
   await personalCards(el, e, ()=>renderArchive(el));
 }
 
-/* ============================================================
-   صفحة التفاصيل
-   ============================================================ */
 export async function renderDetails(el, goHome){
   await refresh();
   const f = await get('meta','file');
@@ -63,7 +57,6 @@ export async function renderDetails(el, goHome){
   const secs = [...new Set(rt.map(r=>r.sector))].sort();
   const sec = k=>k.split('|')[1];
 
-  /* ===== 1) خط السير ===== */
   let routesHtml = '<div class="routes-block">';
   if (!rt.length){
     routesHtml += '<p class="mute">لا يوجد خط سير.</p>';
@@ -83,7 +76,6 @@ export async function renderDetails(el, goHome){
   }
   routesHtml += '</div>';
 
-  /* ===== 2) الجداول العلوية والسفلية ===== */
   const topRows = secs.map(s=>{
     const debt = st.S.filter(x=>x.inRoute && x.sector===s).reduce((t,x)=>t+x.value, 0);
     const iss = rt.filter(r=>r.sector===s).reduce((t,r)=>t+(r.issuance||0), 0);
@@ -104,7 +96,6 @@ export async function renderDetails(el, goHome){
     ];
   });
 
-  /* ===== 3) بناء بيانات "المتبقي في الموقع" ===== */
   const g = {};
   work().forEach(s=>{
     const sec2 = s.sector, b = s.blk, d = s.bld, apt = s.apt, v = s.value || 0;
@@ -117,11 +108,9 @@ export async function renderDetails(el, goHome){
     g[sec2].blks[b].blds[d].apts.push({ apt, value: v, name: s.name || '' });
   });
 
-  /* ===== 4) الجداول المفقودة (oor + os) ===== */
   const oor = e.filter(x=>x.out && x.type==='pay');
   const os = await all('otherSource');
 
-  /* ===== 5) بناء HTML الرئيسي ===== */
   el.innerHTML = `
     ${routesHtml}
 
@@ -173,7 +162,6 @@ export async function renderDetails(el, goHome){
     </div>
   `;
 
-  /* ===== 6) رسم "المتبقي في الموقع" ===== */
   let siteLevel = 'sector';
   let sortDir = 'asc';
   let openSec = null;
@@ -324,7 +312,6 @@ export async function renderDetails(el, goHome){
 
   drawSite();
 
-  /* ===== 7) تطبيق التمييز ===== */
   const applyHl = (kind)=>{
     const input = el.querySelector(kind==='apt' ? '#hlApt' : kind==='bld' ? '#hlBld' : '#hlBlk');
     if (!input) return;
