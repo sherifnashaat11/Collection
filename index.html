@@ -19,7 +19,6 @@
     <span class="app-version" id="appVersion">إصدار 1.0.0</span>
   </div>
   <div class="header-bottom-row">
-    <!-- من اليسار إلى اليمين (حسب ترتيب اللغة الإنجليزية) -->
     <button class="ico power-btn" aria-label="خروج" onclick="window.close();" title="خروج">⏻</button>
     <span class="pill" id="net">…</span>
     <button class="ico" id="ledgerBtn" aria-label="ما تم تحصيله" title="ما تم تحصيله" onclick="document.querySelector('#tabs button[data-t=\'ledger\']').click();">✅</button>
@@ -27,6 +26,7 @@
     <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
   </div>
 </header>
+
 <div id="menu" class="menu" hidden></div>
 
 <main id="locked">
@@ -57,12 +57,13 @@
   <section id="view"></section>
 </main>
 
+<!-- التبويبات السفلية مخفية بالكامل ولكن نستخدمها برمجياً للتنقل -->
 <nav class="tabs" id="tabs" hidden>
   <button data-t="home" class="on"><span class="ico-emoji">📋</span>التحصيل</button>
   <button data-t="ledger"><span class="ico-emoji">✅</span>ما تم تحصيله</button>
   <button data-t="search"><span class="ico-emoji">🔍</span>بحث</button>
 </nav>
-  
+
 <footer class="app-footer" id="footer" hidden>
   <span>تطوير: <b>شريف نشأت</b></span>
   <span> · </span>
@@ -132,6 +133,5 @@
   document.body.appendChild(s);
 })();
 </script>
-
 </body>
 </html>
