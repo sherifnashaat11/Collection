@@ -57,6 +57,8 @@ async function reload(){
     const f2 = await get('meta', 'file');
     st.cycle = f2.cycle;
     renderMenu();
+    const whoEl = $('who');
+    if (whoEl) whoEl.textContent = `${a.name} · إصدار ${f2.cycle}`;
     show(tab);
   }catch(e){ toast('خطأ: ' + e.message); console.error(e); }
 }
@@ -96,6 +98,8 @@ async function boot(){
     if (!unlocked && await isOn()){ showLocked(); return; }
     booted = true;
     st.no = a.no; st.cycle = f.cycle; st.who = a.name;
+    const whoEl = $('who');
+    if (whoEl) whoEl.textContent = `${a.name} · إصدار ${f.cycle}`;
     hideLocked();
     $('diag').removeAttribute('data-show');
     if ($('menuBtn')) $('menuBtn').hidden = false;
