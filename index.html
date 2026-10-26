@@ -57,7 +57,6 @@
   <section id="view"></section>
 </main>
 
-<!-- التبويبات السفلية مخفية بالكامل ولكن نستخدمها برمجياً للتنقل -->
 <nav class="tabs" id="tabs" hidden>
   <button data-t="home" class="on"><span class="ico-emoji">📋</span>التحصيل</button>
   <button data-t="ledger"><span class="ico-emoji">✅</span>ما تم تحصيله</button>
@@ -82,8 +81,6 @@
   var footerEl = document.getElementById('footer');
 
   function showDiag(msg){
-    document.getElementById('who').textContent = 'تعذر التحميل';
-    lockedEl.removeAttribute('data-show');
     appEl.hidden = true;
     tabsEl.hidden = true;
     if (footerEl) footerEl.hidden = true;
@@ -102,7 +99,7 @@
     if (!appEl.hidden) return;
     if (lockedEl.getAttribute('data-show') === '1') return;
     if (diagEl.getAttribute('data-show') === '1') return;
-    showDiag('لم يبدأ التطبيق بعد 5 ثوانٍ.\nتأكد من رفع js/collector/app.js وأن الإنترنت يعمل.\nافتح F12 > Console لمعرفة الخطأ.');
+    showDiag('لم يبدأ التطبيق بعد 5 ثوانٍ.\nتأكد من رفع js/collector/app.js وأن الإنترنت يعمل.');
   }, 5000);
 
   document.getElementById('retry').onclick = function(){ location.reload(); };
