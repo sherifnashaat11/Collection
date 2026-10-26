@@ -311,6 +311,10 @@ function partialDialog(s){
 /* ===== الصفحة الرئيسية ===== */
 export async function renderHome(el){
   const y = scrollY;
+  let currentMode = 'list'; // تعريف المتغير هنا
+
+
+  
   const w = work();
   if (!st.S.length){
     el.innerHTML = '<div class="empty">لا توجد بيانات بعد. اضغط «تحديث الملف» من تبويب «ما تم تحصيله».</div>';
