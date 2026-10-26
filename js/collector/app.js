@@ -278,17 +278,22 @@ document.addEventListener('touchend', (e) => {
       }
       
       // إغلاق العمارة إذا كنا داخلها (في الصفحة الرئيسية)
+ 
+      
+
+
+      // إغلاق العمارة إذا كنا داخلها (في الصفحة الرئيسية)
       const backBtn = document.getElementById('back');
-if (backBtn) {
-  // ... الكود الذي يليه
-}
-      if (backBtn && !backBtn.hidden) {
-        history.back();
-      } else if (typeof st !== 'undefined' && st.open) {
+      
+      // بما أننا حذفنا زر الرجوع من الهيدر، سنعتمد فقط على إغلاق العمارة
+      if (typeof st !== 'undefined' && st.open) {
         st.open = null;
         st.sel.clear();
         if (typeof renderHome === 'function') renderHome(document.getElementById('view'));
+      } else if (backBtn && !backBtn.hidden) {
+        history.back();
       }
+      
     }
   }
 }, { passive: true });
