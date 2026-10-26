@@ -1189,3 +1189,129 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
 
 
 #tabs { display: none !important; }
+
+/* ============================================================
+   الهيدر الجديد (سطرين)
+   ============================================================ */
+.top {
+  padding: 10px 15px !important;
+  background: linear-gradient(135deg, #0f2438, #1e3a5f) !important;
+  border-bottom: 4px solid var(--ember);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.header-top-row h1 {
+  font-size: 18px !important;
+  margin: 0 !important;
+  color: #fff;
+}
+.app-version {
+  font-size: 12px;
+  color: #9db6c8;
+  background: rgba(255,255,255,0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.header-bottom-row {
+  display: flex;
+  justify-content: flex-start; /* يبدأ من اليسار */
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  direction: ltr; /* لضمان الترتيب من اليسار لليمين */
+}
+.header-bottom-row .ico {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.header-bottom-row .ico:hover {
+  background: rgba(255,255,255,0.2);
+}
+.header-bottom-row .power-btn {
+  background: rgba(214, 58, 58, 0.2);
+  color: #f87171;
+}
+.header-bottom-row .power-btn:hover {
+  background: rgba(214, 58, 58, 0.4);
+}
+.header-bottom-row .pill {
+  margin-inline-start: auto; /* لدفع زر القائمة إلى أقصى اليمين */
+  direction: rtl;
+}
+
+/* إخفاء الشريط السفلي */
+#tabs {
+  display: none !important;
+}
+
+/* ============================================================
+   الأنماط (Themes) - الألوان
+   ============================================================ */
+/* النمط الافتراضي (الفاتح) - موجود بالفعل في base.css */
+
+/* النمط الداكن */
+body[data-theme="dark"] {
+  --paper: #0a1722;
+  --paper-2: #13293d;
+  --card: #1a2f42;
+  --line: #2a4257;
+  --ink: #e7eff5;
+  --mute: #8da4b4;
+  --soft: #6b7f8f;
+  --flame: #4fa8e8;
+  --ember: #f5b53a;
+  --ok: #34d399;
+  --bad: #f87171;
+}
+
+/* النمط الأخضر */
+body[data-theme="emerald"] {
+  --paper: #f0fdf4;
+  --card: #ffffff;
+  --line: #bbf7d0;
+  --ink: #064e3b;
+  --mute: #047857;
+  --flame: #059669;
+  --ember: #d97706;
+  --collector: #059669;
+  --collector-soft: #d1fae5;
+}
+
+/* النمط الأزرق الليلي */
+body[data-theme="midnight"] {
+  --paper: #0f172a;
+  --card: #1e293b;
+  --line: #334155;
+  --ink: #f1f5f9;
+  --mute: #94a3b8;
+  --flame: #38bdf8;
+  --ember: #fbbf24;
+  --collector: #818cf8;
+  --collector-soft: #312e81;
+}
+
+/* ألوان الشقق المتبادلة */
+.apt-card[data-apt-odd="1"] { background-color: var(--card) !important; }
+.apt-card[data-apt-odd="0"] { background-color: var(--paper) !important; }
+body[data-theme="dark"] .apt-card[data-apt-odd="0"] { background-color: #111e2d !important; }
+
+
+
+
