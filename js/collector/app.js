@@ -279,6 +279,9 @@ document.addEventListener('touchend', (e) => {
       
       // إغلاق العمارة إذا كنا داخلها (في الصفحة الرئيسية)
       const backBtn = document.getElementById('back');
+if (backBtn) {
+  // ... الكود الذي يليه
+}
       if (backBtn && !backBtn.hidden) {
         history.back();
       } else if (typeof st !== 'undefined' && st.open) {
