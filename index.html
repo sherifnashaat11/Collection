@@ -13,30 +13,20 @@
 <link rel="stylesheet" href="css/collector.css">
 </head>
 <body>
-<header class="top"><div>
-  <button id="back" class="ico" aria-label="رجوع" onclick="history.back()" style="display:none; font-size: 24px;">➡️</button>
-  <svg viewBox="0 0 48 48" aria-hidden="true">
-    <path d="M24 3c3 9 14 13 14 26a14 14 0 0 1-28 0c0-6 3-9 6-12 0 5 3 7 5 7-2-8 0-15 3-21z" fill="#f2a516"/>
-    <path d="M24 24c2 4 7 6 7 12a7 7 0 0 1-14 0c0-4 4-6 7-12z" fill="#1e6fa8"/>
-  </svg>
-  <span style="flex: 1;">
+<header class="top">
+  <div class="header-top-row">
     <h1>محصّل الغاز</h1>
-    <p id="who">جارٍ التحقق…</p>
-  </span>
-
-
-
-  <span class="pill" id="net">…</span>
-  <button class="ico" id="ledgerBtn" aria-label="ما تم تحصيله" title="ما تم تحصيله" onclick="document.querySelector('#tabs button[data-t=\'ledger\']').click();" style="font-size: 20px;">✅</button>
-  <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
-  <button class="ico power-btn" aria-label="خروج" onclick="window.close();" style="font-size: 22px; margin-inline-start: 5px;">⏻</button>
-
-
-
-
-  
-</div></header>
-
+    <span class="app-version" id="appVersion">إصدار 1.0.0</span>
+  </div>
+  <div class="header-bottom-row">
+    <!-- من اليسار إلى اليمين (حسب ترتيب اللغة الإنجليزية) -->
+    <button class="ico power-btn" aria-label="خروج" onclick="window.close();" title="خروج">⏻</button>
+    <span class="pill" id="net">…</span>
+    <button class="ico" id="ledgerBtn" aria-label="ما تم تحصيله" title="ما تم تحصيله" onclick="document.querySelector('#tabs button[data-t=\'ledger\']').click();">✅</button>
+    <button class="ico" id="homeBtn" aria-label="التحصيل" title="التحصيل" onclick="document.querySelector('#tabs button[data-t=\'home\']').click();">📋</button>
+    <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
+  </div>
+</header>
 <div id="menu" class="menu" hidden></div>
 
 <main id="locked">
