@@ -1,4 +1,4 @@
-const CACHE = 'collect-v33';
+const CACHE = 'collect-v34';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
