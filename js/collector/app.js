@@ -10,6 +10,12 @@ import {renderMenu} from './buttons.js';
 import {check} from './updateCheck.js';
 import {exportArchive} from './export.js';
 
+import { renderMenu, initTheme } from './button.js';
+initTheme();
+renderMenu();
+
+
+
 const $ = id => document.getElementById(id);
 const view = $('view');
 let tab = 'home';
