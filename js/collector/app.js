@@ -6,15 +6,11 @@ import {renderArchive, renderDetails} from './details.js';
 import {renderSearch} from './search.js';
 import {reconcile} from './reconcile.js';
 import {choose} from './personal.js';
-
 import {check} from './updateCheck.js';
 import {exportArchive} from './export.js';
 
-import { renderMenu, initTheme } from './buttons.js';
-initTheme();
-renderMenu();
-
-
+// ← استيراد القائمة والثيم من button.js (بدل buttons.js)
+import { renderMenu, initTheme } from './button.js';
 
 const $ = id => document.getElementById(id);
 const view = $('view');
@@ -180,4 +176,6 @@ if ('serviceWorker' in navigator){
 $('menuBtn').onclick = e => { e.stopPropagation(); $('menu').hidden = !$('menu').hidden; };
 document.addEventListener('click', () => { $('menu').hidden = true; });
 
+// ← تطبيق الثيم المحفوظ قبل الإقلاع
+initTheme();
 boot();
