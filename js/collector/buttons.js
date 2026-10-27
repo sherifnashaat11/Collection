@@ -36,7 +36,10 @@ function applyTheme(id) {
   else document.body.setAttribute('data-theme', id);
   try { localStorage.setItem('app-theme', id); } catch (_) {}
   document.dispatchEvent(new CustomEvent('themechange', { detail: { id } }));
-  document.querySelector('#tabs button.on')?.click();
+  try {
+    const active = document.querySelector('#tabs button.on');
+    if (active) active.click();
+  } catch (_) {}
 }
 
 export function openPage(file, params){
@@ -107,7 +110,8 @@ export async function renderMenu(){
   if (btnFullSearch) {
     btnFullSearch.onclick = () => {
       m.hidden = true;
-      document.querySelector('#tabs button[data-t="search"]').click();
+      const btn = document.querySelector('#tabs button[data-t="search"]');
+      if (btn) btn.click();
     };
   }
 
