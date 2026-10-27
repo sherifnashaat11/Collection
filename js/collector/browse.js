@@ -23,6 +23,7 @@ const due = s => Math.max(0, s.value - (st.adv.get(key(s))||0));
 const tot = a => totals(a, due);
 const fz = s => searchKey(s).replace(/[خج]/g, 'ح').replace(/ذ/g, 'د');
 
+/* ===== الدوال المُصدَّرة التي يحتاجها app.js و details.js ===== */
 export function setFilter(f){ st.filter = f; }
 export function clearFilter(){ st.filter = null; }
 
@@ -49,6 +50,7 @@ export const toast = t => {
   e._t = setTimeout(() => { e.className = ''; }, 2600);
 };
 
+/* ===== دالة تأكيد الطباعة ===== */
 function askPrint(entries) {
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -82,6 +84,7 @@ function askPrint(entries) {
   });
 }
 
+/* ===== تصميم بطاقات الشقق ===== */
 function aptsView(a){
   const ch = a.filter(s => st.sel.has(key(s)));
   const ct = tot(ch);
@@ -150,6 +153,7 @@ function aptsView(a){
   return {html: cards, ch, ct, allTot, barHtml};
 }
 
+/* ===== ربط أحداث الشقق ===== */
 function bind(el, a, v, again){
   el.querySelectorAll('[data-k]').forEach(c => {
     c.onchange = () => { c.checked ? st.sel.add(c.dataset.k) : st.sel.delete(c.dataset.k); again(); };
@@ -238,6 +242,7 @@ function bind(el, a, v, again){
   };
 }
 
+/* ===== السداد الجزئي ===== */
 function partialDialog(s){
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -297,6 +302,7 @@ function partialDialog(s){
   });
 }
 
+/* ===== الصفحة الرئيسية ===== */
 export async function renderHome(el){
   const y = scrollY;
   let currentMode = 'list';
@@ -526,6 +532,7 @@ export async function renderHome(el){
   scrollTo(0, y);
 }
 
+/* ===== صفحة ما تم تحصيله ===== */
 export async function renderLedger(el, reload, exp){
   await refresh();
   const e = await list();
