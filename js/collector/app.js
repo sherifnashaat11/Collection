@@ -6,11 +6,11 @@ import {renderArchive, renderDetails} from './details.js';
 import {renderSearch} from './search.js';
 import {reconcile} from './reconcile.js';
 import {choose} from './personal.js';
-import {renderMenu} from './buttons.js';
+
 import {check} from './updateCheck.js';
 import {exportArchive} from './export.js';
 
-import { renderMenu, initTheme } from './button.js';
+import { renderMenu, initTheme } from './buttons.js';
 initTheme();
 renderMenu();
 
