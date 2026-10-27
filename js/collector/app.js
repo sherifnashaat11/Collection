@@ -10,7 +10,7 @@ import {check} from './updateCheck.js';
 import {exportArchive} from './export.js';
 
 // ← استيراد القائمة والثيم من button.js (بدل buttons.js)
-import { renderMenu, initTheme } from './button.js';
+import { renderMenu, initTheme } from './buttons.js';
 
 const $ = id => document.getElementById(id);
 const view = $('view');
