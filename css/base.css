@@ -4,7 +4,7 @@
    الإصدار: 1.0.0
    ============================================================ */
 
-/* ===== الوضع الفاتح ===== */
+/* ===== الوضع الفاتح (الافتراضي) ===== */
 :root{
   /* الخلفيات */
   --paper: #f4f7fa;
@@ -70,59 +70,152 @@
   --r-md: 12px;
   --r-lg: 16px;
   --r-xl: 24px;
-  
+
   --advance: #7c3aed;
-  
-  
-  
 }
 
 /* ===== الوضع الداكن ===== */
-@media(prefers-color-scheme:dark){
-  :root{
-    --paper: #0a1722;
-    --paper-2: #13293d;
-    --card: #1a2f42;
-    --line: #2a4257;
+body[data-theme="dark"]{
+  --paper: #0a1722;
+  --paper-2: #13293d;
+  --card: #1a2f42;
+  --line: #2a4257;
 
-    --ink: #e7eff5;
-    --mute: #8da4b4;
-    --soft: #6b7f8f;
+  --ink: #e7eff5;
+  --mute: #8da4b4;
+  --soft: #6b7f8f;
 
-    --flame: #4fa8e8;
-    --ember: #f5b53a;
-    --ok: #34d399;
-    --bad: #f87171;
-    --info: #60a5fa;
+  --flame: #4fa8e8;
+  --ember: #f5b53a;
+  --ok: #34d399;
+  --bad: #f87171;
+  --info: #60a5fa;
 
-    --hl-apt: #38bdf8;
-    --hl-bld: #f472b6;
-    --hl-blk: #fbbf24;
+  --hl-apt: #38bdf8;
+  --hl-bld: #f472b6;
+  --hl-blk: #fbbf24;
 
-    --tag-personal: #a78bfa;
-    --tag-partial: #fb923c;
-    --tag-advance: #34d399;
-    --tag-out: #f87171;
-    --tag-other: #94a3b8;
+  --tag-personal: #a78bfa;
+  --tag-partial: #fb923c;
+  --tag-advance: #34d399;
+  --tag-out: #f87171;
+  --tag-other: #94a3b8;
 
-    --collector: #a78bfa;
-    --collector-soft: #2e1065;
-    --ledger: #38bdf8;
-    --ledger-soft: #082f49;
-    --archive: #fbbf24;
-    --archive-soft: #451a03;
-    --details: #34d399;
-    --details-soft: #064e3b;
-    --search: #60a5fa;
+  --collector: #a78bfa;
+  --collector-soft: #2e1065;
+  --ledger: #38bdf8;
+  --ledger-soft: #082f49;
+  --archive: #fbbf24;
+  --archive-soft: #451a03;
+  --details: #34d399;
+  --details-soft: #064e3b;
+  --search: #60a5fa;
 
-    --grad-top: linear-gradient(135deg, #0a1722 0%, #13293d 100%);
-    --grad-collector: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
-    --grad-ledger: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+  --grad-top: linear-gradient(135deg, #0a1722 0%, #13293d 100%);
+  --grad-collector: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
+  --grad-ledger: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
 
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
-    --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
-  }
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+
+  --advance: #a78bfa;
+}
+
+/* ===== الوضع الأخضر (emerald) ===== */
+body[data-theme="emerald"]{
+  --paper: #f0fdf4;
+  --paper-2: #dcfce7;
+  --card: #ffffff;
+  --line: #bbf7d0;
+
+  --ink: #064e3b;
+  --mute: #047857;
+  --soft: #6b7f8f;
+
+  --flame: #059669;
+  --ember: #d97706;
+  --ok: #059669;
+  --bad: #dc2626;
+  --info: #0284c7;
+
+  --hl-apt: #0ea5e9;
+  --hl-bld: #d946a8;
+  --hl-blk: #d97706;
+
+  --tag-personal: #7c3aed;
+  --tag-partial: #ea580c;
+  --tag-advance: #059669;
+  --tag-out: #dc2626;
+  --tag-other: #475569;
+
+  --collector: #059669;
+  --collector-soft: #d1fae5;
+  --ledger: #0ea5e9;
+  --ledger-soft: #e0f2fe;
+  --archive: #d97706;
+  --archive-soft: #fef3c7;
+  --details: #059669;
+  --details-soft: #d1fae5;
+  --search: #0284c7;
+
+  --grad-top: linear-gradient(135deg, #064e3b 0%, #059669 100%);
+  --grad-collector: linear-gradient(135deg, #059669 0%, #34d399 100%);
+  --grad-ledger: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+
+  --shadow-sm: 0 1px 2px rgba(6,78,59,0.06);
+  --shadow-md: 0 4px 12px rgba(6,78,59,0.10);
+  --shadow-lg: 0 12px 32px rgba(6,78,59,0.15);
+
+  --advance: #7c3aed;
+}
+
+/* ===== الأزرق الليلي (midnight) ===== */
+body[data-theme="midnight"]{
+  --paper: #0f172a;
+  --paper-2: #1e2b45;
+  --card: #1e293b;
+  --line: #334155;
+
+  --ink: #f1f5f9;
+  --mute: #94a3b8;
+  --soft: #6b7f8f;
+
+  --flame: #38bdf8;
+  --ember: #fbbf24;
+  --ok: #34d399;
+  --bad: #f87171;
+  --info: #60a5fa;
+
+  --hl-apt: #38bdf8;
+  --hl-bld: #f472b6;
+  --hl-blk: #fbbf24;
+
+  --tag-personal: #a78bfa;
+  --tag-partial: #fb923c;
+  --tag-advance: #34d399;
+  --tag-out: #f87171;
+  --tag-other: #94a3b8;
+
+  --collector: #818cf8;
+  --collector-soft: #312e81;
+  --ledger: #38bdf8;
+  --ledger-soft: #082f49;
+  --archive: #fbbf24;
+  --archive-soft: #451a03;
+  --details: #34d399;
+  --details-soft: #064e3b;
+  --search: #60a5fa;
+
+  --grad-top: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --grad-collector: linear-gradient(135deg, #4f46e5 0%, #818cf8 100%);
+  --grad-ledger: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+
+  --advance: #a78bfa;
 }
 
 /* ===== الأساسيات ===== */
@@ -136,6 +229,7 @@ body{
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+  transition: background .2s, color .2s;
 }
 
 /* ===== الحقول ===== */
