@@ -2,7 +2,7 @@ import {get, all} from '../core/db.js';
 import {personalCards} from './personal.js';
 import {money} from '../core/utils.js';
 import {list, ldate, keyOf as key} from './ledger.js';
-import {st, esc, work, refresh, setFilter} from './browse.js';
+import {st, esc, work, refresh, setFilter, clearFilter, toast} from './browse.js';
 import {monthsFor} from './monthly.js';
 
 const grp = (a,f)=>a.reduce((m,x)=>{ (m[f(x)]=m[f(x)]||[]).push(x); return m; }, {});
@@ -11,6 +11,9 @@ const tbl = (h,r)=>`<div class="wrap"><table><tr>${h.map(x=>`<th>${x}</th>`).joi
 const who = e=>{ const s = st.by.get(e.key)||{}; return `${esc(s.name||'بدون اسم')} (${s.sector||''}-${s.blk||''}-${s.bld||''}-${s.apt||''})`; };
 const kind = e=>e.type==='advance'?'مقدم':(e.personal?'شخصي':(e.partial?'جزئي':'سداد'));
 
+/* ============================================================
+   صفحة الأرشيف
+   ============================================================ */
 export async function renderArchive(el){
   await refresh();
   const e = await list();
@@ -47,6 +50,47 @@ export async function renderArchive(el){
   await personalCards(el, e, ()=>renderArchive(el));
 }
 
+/* ============================================================
+   أرشيف الشهور
+   ============================================================ */
+export async function renderMonthlyArchive(el){
+  await refresh();
+  const allSubs = st.S.filter(s=>(s.value || 0) > 0 && (s.count || 0) > 1);
+  const rows = [];
+  for (const s of allSubs.slice(0, 200)){
+    const inv = await monthsFor(s);
+    if (inv && inv.length){
+      rows.push([
+        esc(s.name || 'بدون اسم'),
+        s.sector + '-' + s.blk + '-' + s.bld + '-' + s.apt,
+        money(s.value),
+        s.count,
+        inv.map(i=>`${i.month || '?'}: ${money(i.amount)}`).join(' · ')
+      ]);
+    } else {
+      rows.push([
+        esc(s.name || 'بدون اسم'),
+        s.sector + '-' + s.blk + '-' + s.bld + '-' + s.apt,
+        money(s.value),
+        s.count,
+        '<em class="mute">لا شهور مسجلة</em>'
+      ]);
+    }
+  }
+  el.innerHTML = `<div class="card">
+    <h2>أرشيف الشهور — العملاء ذوو المديونيات المتعددة</h2>
+    <p class="mute">هذه القائمة تعرض العملاء الذين لديهم أكثر من فاتورة، مع محاولة استخراج الشهور من السجلات القديمة.</p>
+    ${rows.length ? tbl(['العميل','العنوان','القيمة','العدد','الشهور المتاحة'], rows) : '<p class="mute">لا يوجد.</p>'}
+    <div class="actions" style="margin-top:1rem">
+      <button class="btn ghost" id="backDetails" type="button">رجوع للتفاصيل</button>
+    </div>
+  </div>`;
+  el.querySelector('#backDetails').onclick = ()=>renderDetails(el, ()=>{ history.back(); });
+}
+
+/* ============================================================
+   صفحة التفاصيل
+   ============================================================ */
 export async function renderDetails(el, goHome){
   await refresh();
   const f = await get('meta','file');
@@ -57,6 +101,7 @@ export async function renderDetails(el, goHome){
   const secs = [...new Set(rt.map(r=>r.sector))].sort();
   const sec = k=>k.split('|')[1];
 
+  /* ===== 1) خط السير ===== */
   let routesHtml = '<div class="routes-block">';
   if (!rt.length){
     routesHtml += '<p class="mute">لا يوجد خط سير.</p>';
@@ -76,6 +121,7 @@ export async function renderDetails(el, goHome){
   }
   routesHtml += '</div>';
 
+  /* ===== 2) الجداول العلوية والسفلية ===== */
   const topRows = secs.map(s=>{
     const debt = st.S.filter(x=>x.inRoute && x.sector===s).reduce((t,x)=>t+x.value, 0);
     const iss = rt.filter(r=>r.sector===s).reduce((t,r)=>t+(r.issuance||0), 0);
@@ -96,6 +142,8 @@ export async function renderDetails(el, goHome){
     ];
   });
 
+  /* ===== 3) بناء بيانات "المتبقي في الموقع" ===== */
+  // g[sector] = { blks: { [blk]: { value, blds: { [bld]: { value, apts: [{apt,value,name}] } } } } }
   const g = {};
   work().forEach(s=>{
     const sec2 = s.sector, b = s.blk, d = s.bld, apt = s.apt, v = s.value || 0;
@@ -108,9 +156,11 @@ export async function renderDetails(el, goHome){
     g[sec2].blks[b].blds[d].apts.push({ apt, value: v, name: s.name || '' });
   });
 
+  /* ===== 4) الجداول المفقودة (oor + os) ===== */
   const oor = e.filter(x=>x.out && x.type==='pay');
   const os = await all('otherSource');
 
+  /* ===== 5) بناء HTML الرئيسي ===== */
   el.innerHTML = `
     ${routesHtml}
 
@@ -142,6 +192,31 @@ export async function renderDetails(el, goHome){
     </div>
 
     <div class="card">
+      <h2>تمييز الشقق والبلوكات والعمارات</h2>
+      <p class="mute">حدد قيمة لكل مستوى. سيتم تلوين العناصر التي تساوي أو تتجاوز القيمة في صفحة التحصيل.</p>
+      <div class="hl-panel">
+        <div class="hl-row apt">
+          <label>الشقق المميزة ≥</label>
+          <input id="hlApt" class="num2" type="text" inputmode="numeric" placeholder="0" value="${(st.filter && st.filter.kind==='apt') ? st.filter.value : ''}">
+          <button class="btn sm" data-hl="apt" type="button">تطبيق</button>
+          <button class="btn ghost sm" data-hlc="apt" type="button">خروج</button>
+        </div>
+        <div class="hl-row bld">
+          <label>العمارات المميزة ≥</label>
+          <input id="hlBld" class="num2" type="text" inputmode="numeric" placeholder="0" value="${(st.filter && st.filter.kind==='bld') ? st.filter.value : ''}">
+          <button class="btn sm" data-hl="bld" type="button">تطبيق</button>
+          <button class="btn ghost sm" data-hlc="bld" type="button">خروج</button>
+        </div>
+        <div class="hl-row blk">
+          <label>البلوكات المميزة ≥</label>
+          <input id="hlBlk" class="num2" type="text" inputmode="numeric" placeholder="0" value="${(st.filter && st.filter.kind==='blk') ? st.filter.value : ''}">
+          <button class="btn sm" data-hl="blk" type="button">تطبيق</button>
+          <button class="btn ghost sm" data-hlc="blk" type="button">خروج</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>تسديدات خارج النطاق</h2>
       ${oor.length
         ? tbl(['العميل','المبلغ','التاريخ'], oor.map(x=>[who(x), money(x.amount), ldate(x.time)]))
@@ -162,24 +237,33 @@ export async function renderDetails(el, goHome){
     </div>
   `;
 
+  /* ===== 6) رسم "المتبقي في الموقع" ===== */
   let siteLevel = 'sector';
   let sortDir = 'asc';
   let openSec = null;
   let openBlk = null;
   let openBld = null;
 
+  const cmpNum = (v, op, x)=>{
+    if (op === 'gte') return v >= x;
+    if (op === 'lte') return v <= x;
+    return v === x;
+  };
+
   function drawSite(){
     const body = el.querySelector('#siteBody');
     let html = '';
 
     if (siteLevel === 'sector'){
+      // عرض القطاعات
       const secList = Object.keys(g).sort((a,b)=>Number(a)-Number(b));
       secList.forEach(sec=>{
         const val = g[sec].total;
         const isOpen = openSec === sec;
+        const hi = st.filter && st.filter.kind === 'sector' && st.filter.matches.has('sector:' + sec);
         html += `<div class="site-sec">
           <div class="site-sec-title" data-open-sec="${sec}">
-            <span>القطاع ${sec}</span>
+            <span>القطاع ${sec} ${hi?'🎯':''}</span>
             <span class="total">${money(val)}</span>
           </div>`;
         if (isOpen){
@@ -197,7 +281,10 @@ export async function renderDetails(el, goHome){
         }
         html += '</div>';
       });
-    } else if (siteLevel === 'blk'){
+    }
+
+    else if (siteLevel === 'blk'){
+      // عرض البلوكات لكل قطاع منفصل
       const secList = Object.keys(g).sort((a,b)=>Number(a)-Number(b));
       secList.forEach(sec=>{
         const blks = Object.keys(g[sec].blks);
@@ -208,16 +295,22 @@ export async function renderDetails(el, goHome){
         const arr = blks.map(b=>({ b, v: g[sec].blks[b].value }));
         arr.sort((x,y)=> sortDir==='asc' ? x.v - y.v : y.v - x.v);
         arr.forEach(({b, v})=>{
-          html += `<div class="site-row">
-            <span class="lbl">بلوك ${b}</span>
+          const isOpen = openBlk === sec + '|' + b;
+          const hi = st.filter && st.filter.kind === 'blk' && st.filter.matches.has('blk:' + sec + '|' + b);
+          html += `<div class="site-row ${hi?'hi-blk':''}">
+            <span class="lbl">بلوك ${b} ${hi?'🎯':''}</span>
             <span class="val">${money(v)}</span>
             <button class="open" data-open-blk="${sec}|${b}" type="button">فتح</button>
           </div>`;
         });
         html += '</div></div>';
       });
-    } else if (siteLevel === 'bld'){
+    }
+
+    else if (siteLevel === 'bld'){
+      // عرض العمارات داخل كل بلوك (مفتوح فقط)
       if (!openBlk){
+        // عرض البلوكات أولاً للاختيار
         const secList = Object.keys(g).sort((a,b)=>Number(a)-Number(b));
         secList.forEach(sec=>{
           const blks = Object.keys(g[sec].blks);
@@ -235,6 +328,7 @@ export async function renderDetails(el, goHome){
           html += '</div></div>';
         });
       } else {
+        // عرض عمارات البلوك المفتوح فقط
         const [sec, blk] = openBlk.split('|');
         if (g[sec] && g[sec].blks[blk]){
           const blds = g[sec].blks[blk].blds;
@@ -247,8 +341,9 @@ export async function renderDetails(el, goHome){
             </div>
             <div class="site-sec-body">`;
           arr.forEach(({b, v})=>{
-            html += `<div class="site-row">
-              <span class="lbl">عمارة ${b}</span>
+            const hi = st.filter && st.filter.kind === 'bld' && st.filter.matches.has('bld:' + sec + '|' + blk + '|' + b);
+            html += `<div class="site-row ${hi?'hi-bld':''}">
+              <span class="lbl">عمارة ${b} ${hi?'🎯':''}</span>
               <span class="val">${money(v)}</span>
               <button class="open" data-open-bld="${sec}|${blk}|${b}" type="button">فتح</button>
             </div>`;
@@ -256,7 +351,10 @@ export async function renderDetails(el, goHome){
           html += '</div></div>';
         }
       }
-    } else if (siteLevel === 'apt'){
+    }
+
+    else if (siteLevel === 'apt'){
+      // عرض الشقق داخل العمارة المفتوحة فقط
       if (!openBld){
         html = '<p class="mute">اختر عمارة من المستوى السابق لعرض شققها.</p>';
       } else {
@@ -284,6 +382,7 @@ export async function renderDetails(el, goHome){
 
     body.innerHTML = html || '<p class="mute">لا يوجد متبقٍ.</p>';
 
+    // ربط أحداث
     body.querySelectorAll('[data-open-sec]').forEach(x=>{
       x.onclick = ()=>{ openSec = openSec===x.dataset.openSec ? null : x.dataset.openSec; drawSite(); };
     });
@@ -312,11 +411,11 @@ export async function renderDetails(el, goHome){
 
   drawSite();
 
+  /* ===== 7) تطبيق التمييز ===== */
   const applyHl = (kind)=>{
     const input = el.querySelector(kind==='apt' ? '#hlApt' : kind==='bld' ? '#hlBld' : '#hlBlk');
-    if (!input) return;
     const val = +String(input.value || '0').replace(/[٠-٩]/g, d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-    if (!(val > 0)){ alert('أدخل قيمة صحيحة'); return; }
+    if (!(val > 0)){ toast('أدخل قيمة صحيحة'); return; }
     const matches = new Set();
     if (kind === 'apt'){
       work().forEach(s=>{ if ((s.value||0) >= val) matches.add('apt:' + key(s)); });
@@ -336,7 +435,7 @@ export async function renderDetails(el, goHome){
       Object.keys(grpB).forEach(k=>{ if (grpB[k] >= val) matches.add('blk:' + k); });
     }
     setFilter({ kind, op:'gte', value: val, matches });
-    alert('تم التطبيق — انتقل لصفحة التحصيل لرؤية التمييز');
+    toast('تم التطبيق — انتقل لصفحة التحصيل لرؤية التمييز');
     goHome();
   };
 
@@ -348,8 +447,8 @@ export async function renderDetails(el, goHome){
       const kind = b.dataset.hlc;
       const input = el.querySelector(kind==='apt' ? '#hlApt' : kind==='bld' ? '#hlBld' : '#hlBlk');
       if (input) input.value = '';
-      if (st.filter && st.filter.kind === kind) setFilter(null);
-      alert('تم إلغاء تمييز هذا المستوى');
+      if (st.filter && st.filter.kind === kind) clearFilter();
+      toast('تم إلغاء تمييز هذا المستوى');
     };
   });
 

@@ -6,29 +6,31 @@ import {renderArchive, renderDetails} from './details.js';
 import {renderSearch} from './search.js';
 import {reconcile} from './reconcile.js';
 import {choose} from './personal.js';
+import {renderMenu} from './buttons.js';
 import {check} from './updateCheck.js';
 import {exportArchive} from './export.js';
-
-// ← استيراد القائمة والثيم من button.js (بدل buttons.js)
-import { renderMenu, initTheme } from './buttons.js';
 
 const $ = id => document.getElementById(id);
 const view = $('view');
 let tab = 'home';
+
 
 const R = {
   home: () => renderHome(view),
   ledger: () => renderLedger(view, reload, doExport),
   search: () => renderSearch(view),
   searchAll: () => renderSearch(view, true),
-  searchFromHome: () => renderSearch(view, true, true),
+  searchFromHome: () => renderSearch(view, true, true), // إضافة وضع البحث من الصفحة الرئيسية
   archive: () => renderArchive(view),
   details: () => renderDetails(view, () => show('home'))
 };
 
+
+
 function show(t){
   tab = t;
   st.bld = null; st.all = false;
+  $('back').hidden = true;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   try { R[t](); } catch(e){ console.error('show(' + t + ')', e); toast('خطأ: ' + e.message); }
 }
@@ -59,6 +61,7 @@ async function reload(){
     const f2 = await get('meta', 'file');
     st.cycle = f2.cycle;
     renderMenu();
+    $('who').textContent = `${a.name} · إصدار ${f2.cycle}`;
     show(tab);
   }catch(e){ toast('خطأ: ' + e.message); console.error(e); }
 }
@@ -98,6 +101,7 @@ async function boot(){
     if (!unlocked && await isOn()){ showLocked(); return; }
     booted = true;
     st.no = a.no; st.cycle = f.cycle; st.who = a.name;
+    $('who').textContent = `${a.name} · إصدار ${f.cycle}`;
     hideLocked();
     $('diag').removeAttribute('data-show');
     if ($('menuBtn')) $('menuBtn').hidden = false;
@@ -111,6 +115,7 @@ async function boot(){
     try { check(); } catch(e){ console.warn('check', e); }
   }catch(e){
     console.error('boot', e);
+    $('who').textContent = 'خطأ: ' + e.message;
   }
 }
 
@@ -137,6 +142,7 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
   show(b.dataset.t);
 });
 
+// ربط الأزرار من القائمة المنسدلة
 window.addEventListener('openTab', e => {
   const t = e.detail && e.detail.tab;
   if (!t) return;
@@ -144,6 +150,7 @@ window.addEventListener('openTab', e => {
   show(t);
 });
 
+$('back').onclick = () => history.back();
 addEventListener('popstate', () => {
   if (st.sel.size && !confirm('لديك تحديد غير محفوظ، هل تخرج؟')){
     history.pushState({v: 'bld'}, ''); return;
@@ -176,6 +183,109 @@ if ('serviceWorker' in navigator){
 $('menuBtn').onclick = e => { e.stopPropagation(); $('menu').hidden = !$('menu').hidden; };
 document.addEventListener('click', () => { $('menu').hidden = true; });
 
-// ← تطبيق الثيم المحفوظ قبل الإقلاع
-initTheme();
+
+// استرجاع الوضع الداكن المحفوظ
+const savedTheme = localStorage.getItem('app-theme');
+if (savedTheme === 'dark') {
+  document.body.setAttribute('data-theme', 'dark');
+
+  /* ===== دعم إيماءات السحب للرجوع (Swipe Right/Left) ===== */
+let touchStartX = 0;
+let touchStartY = 0;
+const minSwipeDistance = 80; // الحد الأدنى للمسافة لاعتبارها سحبة
+
+document.addEventListener('touchstart', (e) => {
+  // تجاهل السحب إذا كان المستخدم يضغط على شريط التمرير أو المدخلات
+  if (e.target.closest('input, textarea, select, .no-swipe')) return;
+  
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+  if (e.target.closest('input, textarea, select, .no-swipe')) return;
+
+  const touchEndX = e.changedTouches[0].screenX;
+  const touchEndY = e.changedTouches[0].screenY;
+  
+  const distanceX = touchEndX - touchStartX;
+  const distanceY = touchEndY - touchStartY;
+
+  // التأكد من أن السحب أفقي وليس عمودياً (لتجنب التداخل مع التمرير)
+  if (Math.abs(distanceX) > minSwipeDistance && Math.abs(distanceY) < 50) {
+    // السحب لليمين (في الواجهات العربية RTL يعني رجوع)
+    if (distanceX > 0) {
+      // إذا كان هناك نافذة مفتوحة (dialog)، أغلقها
+      const openDialog = document.querySelector('dialog[open]');
+      if (openDialog) {
+        openDialog.close();
+        openDialog.remove();
+        return;
+      }
+      
+      // إذا كنا في تبويب غير الرئيسية، ارجع للرئيسية
+      const activeTab = document.querySelector('#tabs button.on');
+      if (activeTab && activeTab.dataset.t !== 'home') {
+        document.querySelector('#tabs button[data-t="home"]').click();
+        return;
+      }
+      
+      // إذا كنا داخل عمارة مفتوحة، أغلقها
+      if (st.open) {
+        st.open = null;
+        st.sel.clear();
+        renderHome(document.getElementById('view'));
+      }
+    }
+  }
+}, { passive: true });
+}
+
+
+
+
+console.log('[app] started');
 boot();
+/* ===== دعم إيماءات السحب للرجوع (Swipe Right) ===== */
+let touchStartX = 0;
+let touchStartY = 0;
+const minSwipeDistance = 100;
+
+document.addEventListener('touchstart', (e) => {
+  if (e.target.closest('input, textarea, select')) return;
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+  if (e.target.closest('input, textarea, select')) return;
+  const touchEndX = e.changedTouches[0].screenX;
+  const touchEndY = e.changedTouches[0].screenY;
+  const distanceX = touchEndX - touchStartX;
+  const distanceY = touchEndY - touchStartY;
+
+  if (Math.abs(distanceX) > minSwipeDistance && Math.abs(distanceY) < 60) {
+    if (distanceX > 0) { // سحب لليمين (رجوع)
+      // إغلاق أي نافذة مفتوحة
+      const openDialog = document.querySelector('dialog[open]');
+      if (openDialog) { openDialog.close(); openDialog.remove(); return; }
+      
+      // الرجوع للتبويب الرئيسي إذا كنا في تبويب آخر
+      const activeTab = document.querySelector('#tabs button.on');
+      if (activeTab && activeTab.dataset.t !== 'home') {
+        document.querySelector('#tabs button[data-t="home"]').click();
+        return;
+      }
+      
+      // إغلاق العمارة إذا كنا داخلها (في الصفحة الرئيسية)
+      const backBtn = document.getElementById('back');
+      if (backBtn && !backBtn.hidden) {
+        history.back();
+      } else if (typeof st !== 'undefined' && st.open) {
+        st.open = null;
+        st.sel.clear();
+        if (typeof renderHome === 'function') renderHome(document.getElementById('view'));
+      }
+    }
+  }
+}, { passive: true });

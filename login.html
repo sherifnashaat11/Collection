@@ -56,8 +56,7 @@ $('go').onclick = async () => {
   const b = $('go'), m = $('msg');
   b.disabled = true; m.textContent = 'جارٍ التحقق…';
   try{
-    // تم إزالة حقل الاسم، لذا نمرر نصاً فارغاً، وسيتم جلبه من رقم الأداء
-    const a = await login('', $('no').value, $('pw').value);
+    const a = await login($('name').value.trim(), $('no').value, $('pw').value);
     localStorage.setItem('lastNo', a.no);
     const n = await loadFiles(a, t => m.textContent = t);
     m.textContent = `تم تحميل ${n} عميل`;

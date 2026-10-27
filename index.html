@@ -13,19 +13,29 @@
 <link rel="stylesheet" href="css/collector.css">
 </head>
 <body>
-<header class="top">
-  <div class="header-top-row">
+<header class="top"><div>
+  <button id="back" class="ico" aria-label="رجوع" onclick="history.back()" style="display:none; font-size: 24px;">➡️</button>
+  <svg viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M24 3c3 9 14 13 14 26a14 14 0 0 1-28 0c0-6 3-9 6-12 0 5 3 7 5 7-2-8 0-15 3-21z" fill="#f2a516"/>
+    <path d="M24 24c2 4 7 6 7 12a7 7 0 0 1-14 0c0-4 4-6 7-12z" fill="#1e6fa8"/>
+  </svg>
+  <span style="flex: 1;">
     <h1>محصّل الغاز</h1>
-    <span class="app-version" id="appVersion">إصدار 1.0.0</span>
-  </div>
-  <div class="header-bottom-row">
-    <button class="ico power-btn" aria-label="خروج" onclick="window.close();" title="خروج">⏻</button>
-    <span class="pill" id="net">…</span>
-    <button class="ico" id="ledgerBtn" aria-label="ما تم تحصيله" title="ما تم تحصيله" onclick="document.querySelector('#tabs button[data-t=\'ledger\']').click();">✅</button>
-    <button class="ico" id="homeBtn" aria-label="التحصيل" title="التحصيل" onclick="document.querySelector('#tabs button[data-t=\'home\']').click();">📋</button>
-    <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
-  </div>
-</header>
+    <p id="who">جارٍ التحقق…</p>
+  </span>
+
+
+
+  <span class="pill" id="net">…</span>
+  <button class="ico" id="ledgerBtn" aria-label="ما تم تحصيله" title="ما تم تحصيله" onclick="document.querySelector('#tabs button[data-t=\'ledger\']').click();" style="font-size: 20px;">✅</button>
+  <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
+  <button class="ico power-btn" aria-label="خروج" onclick="window.close();" style="font-size: 22px; margin-inline-start: 5px;">⏻</button>
+
+
+
+
+  
+</div></header>
 
 <div id="menu" class="menu" hidden></div>
 
@@ -58,11 +68,11 @@
 </main>
 
 <nav class="tabs" id="tabs" hidden>
-  <button data-t="home" class="on">التحصيل</button>
-  <button data-t="ledger">ما تم تحصيله</button>
-  <button data-t="search">بحث</button>
+  <button data-t="home" class="on"><span class="ico-emoji">📋</span>التحصيل</button>
+  <button data-t="ledger"><span class="ico-emoji">✅</span>ما تم تحصيله</button>
+  <button data-t="search"><span class="ico-emoji">🔍</span>بحث</button>
 </nav>
-
+  
 <footer class="app-footer" id="footer" hidden>
   <span>تطوير: <b>شريف نشأت</b></span>
   <span> · </span>
@@ -81,6 +91,8 @@
   var footerEl = document.getElementById('footer');
 
   function showDiag(msg){
+    document.getElementById('who').textContent = 'تعذر التحميل';
+    lockedEl.removeAttribute('data-show');
     appEl.hidden = true;
     tabsEl.hidden = true;
     if (footerEl) footerEl.hidden = true;
@@ -99,7 +111,7 @@
     if (!appEl.hidden) return;
     if (lockedEl.getAttribute('data-show') === '1') return;
     if (diagEl.getAttribute('data-show') === '1') return;
-    showDiag('لم يبدأ التطبيق بعد 5 ثوانٍ.\nتأكد من رفع js/collector/app.js وأن الإنترنت يعمل.');
+    showDiag('لم يبدأ التطبيق بعد 5 ثوانٍ.\nتأكد من رفع js/collector/app.js وأن الإنترنت يعمل.\nافتح F12 > Console لمعرفة الخطأ.');
   }, 5000);
 
   document.getElementById('retry').onclick = function(){ location.reload(); };
@@ -130,5 +142,6 @@
   document.body.appendChild(s);
 })();
 </script>
+
 </body>
 </html>

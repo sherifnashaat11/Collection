@@ -6,7 +6,7 @@ import { openPage } from './buttons.js';
 import { getManual, saveManual } from './names.js';
 import { choose } from './personal.js';
 import { monthOptions } from './monthly.js';
-import { searchKey } from '../core/normalize.js';
+import { searchKey } from '../core/normalize.js'; // نحتاجه للبحث
 
 export const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -18,14 +18,11 @@ export const st = {
 };
 
 const srt = (a,b) => Number(a)-Number(b);
+const back = v => { const b = document.getElementById('back'); if (b) b.hidden = !v; };
 const num = s => +String(s||'').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const due = s => Math.max(0, s.value - (st.adv.get(key(s))||0));
 const tot = a => totals(a, due);
-const fz = s => searchKey(s).replace(/[خج]/g, 'ح').replace(/ذ/g, 'د');
-
-/* ===== الدوال المُصدَّرة التي يحتاجها app.js و details.js ===== */
-export function setFilter(f){ st.filter = f; }
-export function clearFilter(){ st.filter = null; }
+const fz = s => searchKey(s).replace(/[خج]/g, 'ح').replace(/ذ/g, 'د'); // للبحث
 
 export async function refresh(){
   const mn = await getManual();
@@ -50,7 +47,14 @@ export const toast = t => {
   e._t = setTimeout(() => { e.className = ''; }, 2600);
 };
 
-/* ===== دالة تأكيد الطباعة ===== */
+export function setFilter(f){ st.filter = f; }
+export function clearFilter(){ st.filter = null; }
+export function inFilter(kind, k){
+  if (!st.filter) return false;
+  return st.filter.matches.has(kind + ':' + k);
+}
+
+/* ===== دالة تأكيد الطباعة بعد السداد ===== */
 function askPrint(entries) {
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -84,7 +88,7 @@ function askPrint(entries) {
   });
 }
 
-/* ===== تصميم بطاقات الشقق ===== */
+/* ===== التصميم الجديد لبطاقات الشقق ===== */
 function aptsView(a){
   const ch = a.filter(s => st.sel.has(key(s)));
   const ct = tot(ch);
@@ -101,8 +105,13 @@ function aptsView(a){
     const nameHtml = s.name ? esc(s.name) : '<em class="empty-name">بدون اسم</em>';
     const isOdd = Number(s.apt) % 2 === 1 ? '1' : '0';
     const partial = (s.count || 0) > 1;
+    let hiClass = '';
+    if (st.filter){
+      if (st.filter.kind === 'apt' && st.filter.matches.has('apt:' + k)) hiClass = 'hi-apt';
+      else if (st.filter.kind === 'bld' && st.filter.matches.has('bld:' + s.sector + '|' + s.blk + '|' + s.bld)) hiClass = 'hi-bld';
+    }
     
-    return `<div class="apt-card ${selected?'on':''}" data-card="${k}" data-apt-odd="${isOdd}">
+    return `<div class="apt-card ${selected?'on':''} ${hiClass}" data-card="${k}" data-apt-odd="${isOdd}">
       <div class="apt-row-1">
         <div class="apt-name" data-nm="${k}">${nameHtml}</div>
         <button class="apt-val-btn" data-p="${k}" type="button">${money(due(s))}</button>
@@ -130,7 +139,7 @@ function aptsView(a){
   let barHtml = '';
   if (ch.length > 0) {
     barHtml = `
-      <div class="building-bottom-card">
+      <div class="building-bottom-card" style="background: var(--card); border-top: 2px solid var(--line); padding: 12px; margin-top: 10px; border-radius: 0 0 var(--r-lg) var(--r-lg);">
         <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: var(--ink);">
           <span>إجمالي العمارة:</span>
           <b>${money(allTot.value)} ج</b>
@@ -153,11 +162,76 @@ function aptsView(a){
   return {html: cards, ch, ct, allTot, barHtml};
 }
 
+/* ===== السداد الجزئي ===== */
+function partialDialog(s){
+  return new Promise(resolve => {
+    const d = document.createElement('dialog');
+    d.className = 'partial-dialog';
+    const maxCount = s.count || 1;
+    const unitValue = maxCount > 0 ? Math.round((s.value / maxCount) * 100) / 100 : s.value;
+    const mOpts = monthOptions(s);
+    let options = '';
+    if (mOpts && mOpts.length > 1){
+      mOpts.forEach(opt => {
+        options += `<button class="partial-opt" type="button" data-cnt="${opt.count}" data-amt="${opt.amount}">
+          عدد ${opt.count} — ${money(opt.amount)} جنيه
+          <small>${opt.label}</small>
+        </button>`;
+      });
+    }
+    d.innerHTML = `
+      <h3>سداد جزئي — شقة ${s.apt}</h3>
+      <p class="mute">المديونية الحالية: ${s.count} فاتورة بقيمة ${money(s.value)} جنيه</p>
+      ${options ? `<div class="partial-options">${options}</div>` : `
+      <div class="stack">
+        <label class="field"><span>عدد الفواتير المسددة</span><input id="pCount" type="number" min="1" max="${maxCount}" value="1"></label>
+        <label class="field"><span>القيمة المسددة</span><input id="pAmount" type="number" min="1" value="${unitValue}"></label>
+      </div>
+      `}
+      <div class="actions">
+        <button class="btn" id="pOk" type="button">تأكيد السداد</button>
+        <button class="btn ghost" id="pCancel" type="button">إلغاء</button>
+      </div>
+    `;
+    document.body.append(d);
+    d.showModal();
+    d.querySelector('#pCancel').onclick = () => { d.close(); d.remove(); resolve(null); };
+    d.querySelector('#pOk').onclick = () => {
+      let count, amount;
+      if (options){
+        const sel = d.querySelector('.partial-opt.selected');
+        if (!sel){ alert('اختر إحدى القيم'); return; }
+        count = +sel.dataset.cnt;
+        amount = +sel.dataset.amt;
+      } else {
+        count = +d.querySelector('#pCount').value;
+        amount = +d.querySelector('#pAmount').value;
+      }
+      if (!(count > 0) || !(amount > 0)){ alert('أدخل قيماً صحيحة'); return; }
+      if (count > maxCount){ alert('عدد الفواتير أكبر من المديونية'); return; }
+      if (amount > s.value){ alert('القيمة أكبر من المديونية'); return; }
+      d.close(); d.remove();
+      resolve({count, amount});
+    };
+    d.querySelectorAll('.partial-opt').forEach(b => {
+      b.onclick = () => {
+        d.querySelectorAll('.partial-opt').forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+      };
+    });
+  });
+}
+
 /* ===== ربط أحداث الشقق ===== */
 function bind(el, a, v, again){
   el.querySelectorAll('[data-k]').forEach(c => {
     c.onchange = () => { c.checked ? st.sel.add(c.dataset.k) : st.sel.delete(c.dataset.k); again(); };
   });
+  const allCb = el.querySelector('#all');
+  if (allCb) allCb.onchange = e => {
+    a.forEach(s => e.target.checked ? st.sel.add(key(s)) : st.sel.delete(key(s)));
+    again();
+  };
   el.querySelectorAll('[data-nm]').forEach(nm => {
     nm.onclick = ev => {
       ev.stopPropagation();
@@ -242,70 +316,9 @@ function bind(el, a, v, again){
   };
 }
 
-/* ===== السداد الجزئي ===== */
-function partialDialog(s){
-  return new Promise(resolve => {
-    const d = document.createElement('dialog');
-    d.className = 'partial-dialog';
-    const maxCount = s.count || 1;
-    const unitValue = maxCount > 0 ? Math.round((s.value / maxCount) * 100) / 100 : s.value;
-    const mOpts = monthOptions(s);
-    let options = '';
-    if (mOpts && mOpts.length > 1){
-      mOpts.forEach(opt => {
-        options += `<button class="partial-opt" type="button" data-cnt="${opt.count}" data-amt="${opt.amount}">
-          عدد ${opt.count} — ${money(opt.amount)} جنيه
-          <small>${opt.label}</small>
-        </button>`;
-      });
-    }
-    d.innerHTML = `
-      <h3>سداد جزئي — شقة ${s.apt}</h3>
-      <p class="mute">المديونية الحالية: ${s.count} فاتورة بقيمة ${money(s.value)} جنيه</p>
-      ${options ? `<div class="partial-options">${options}</div>` : `
-      <div class="stack">
-        <label class="field"><span>عدد الفواتير المسددة</span><input id="pCount" type="number" min="1" max="${maxCount}" value="1"></label>
-        <label class="field"><span>القيمة المسددة</span><input id="pAmount" type="number" min="1" value="${unitValue}"></label>
-      </div>
-      `}
-      <div class="actions">
-        <button class="btn" id="pOk" type="button">تأكيد السداد</button>
-        <button class="btn ghost" id="pCancel" type="button">إلغاء</button>
-      </div>
-    `;
-    document.body.append(d);
-    d.showModal();
-    d.querySelector('#pCancel').onclick = () => { d.close(); d.remove(); resolve(null); };
-    d.querySelector('#pOk').onclick = () => {
-      let count, amount;
-      if (options){
-        const sel = d.querySelector('.partial-opt.selected');
-        if (!sel){ alert('اختر إحدى القيم'); return; }
-        count = +sel.dataset.cnt;
-        amount = +sel.dataset.amt;
-      } else {
-        count = +d.querySelector('#pCount').value;
-        amount = +d.querySelector('#pAmount').value;
-      }
-      if (!(count > 0) || !(amount > 0)){ alert('أدخل قيماً صحيحة'); return; }
-      if (count > maxCount){ alert('عدد الفواتير أكبر من المديونية'); return; }
-      if (amount > s.value){ alert('القيمة أكبر من المديونية'); return; }
-      d.close(); d.remove();
-      resolve({count, amount});
-    };
-    d.querySelectorAll('.partial-opt').forEach(b => {
-      b.onclick = () => {
-        d.querySelectorAll('.partial-opt').forEach(x => x.classList.remove('selected'));
-        b.classList.add('selected');
-      };
-    });
-  });
-}
-
-/* ===== الصفحة الرئيسية ===== */
+/* ===== الصفحة الرئيسية (التحصيل + البحث) ===== */
 export async function renderHome(el){
-  const y = scrollY;
-  let currentMode = 'list';
+  const y = scrollY; back(false);
   const w = work();
   if (!st.S.length){
     el.innerHTML = '<div class="empty">لا توجد بيانات بعد. اضغط «تحديث الملف» من تبويب «ما تم تحصيله».</div>';
@@ -326,16 +339,15 @@ export async function renderHome(el){
   const opt = (a,v) => a.map(x => `<option ${x===v?'selected':''}>${x}</option>`).join('');
 
   let ov = null;
+  let currentMode = 'list';
 
-  let html = `
-  <div class="card" id="searchBarCard" style="margin-bottom: 15px;">
-    <div class="view-mode" style="display: flex; gap: 10px; margin-bottom: 10px;">
-      <button class="btn ${currentMode === 'search-name' ? '' : 'ghost'}" id="btnSearchName" style="flex:1; font-size:13px;">🔍 بحث بالاسم</button>
-      <button class="btn ${currentMode === 'search-code' ? '' : 'ghost'}" id="btnSearchCode" style="flex:1; font-size:13px;">🔍 بحث برقم المشترك</button>
-    </div>
-    <div id="searchPanel" style="display:none;">
+  const buildSearchHtml = () => `
+    <div id="searchPanel" style="display:none; margin-bottom: 15px; padding: 15px; background: var(--paper-2); border-radius: var(--r-md); border: 1px solid var(--line);">
       <div id="searchNameWrap" style="display:none;">
         <input id="mainSearchInput" type="text" placeholder="اكتب اسم العميل…" style="width:100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line); font-family: inherit; margin-bottom: 10px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <label class="chk" style="flex:1;"><input type="radio" name="mScope" value="all" checked> الملف كاملاً</label>
+        </div>
         <button class="btn sm" id="mainSearchBtnName" style="width:100%;">بحث</button>
       </div>
       <div id="searchCodeWrap" style="display:none;">
@@ -343,30 +355,36 @@ export async function renderHome(el){
           <label class="field"><span>القطاع</span><input id="mSec" class="num2" type="text" maxlength="2"></label>
           <label class="field"><span>البلوك</span><input id="mBlk" class="num2" type="text" maxlength="2"></label>
           <label class="field"><span>العمارة</span><input id="mBld" class="num2" type="text" maxlength="2"></label>
-          <label class="field"><span>الشقة</span><input id="mApt" class="num2" type="text" maxlength="2"></label>
+          <label class="field"><span>الشقة (اختياري)</span><input id="mApt" class="num2" type="text" maxlength="2"></label>
         </div>
         <button class="btn sm" id="mainSearchBtnCode" style="width:100%;">بحث</button>
       </div>
       <button class="btn ghost sm" id="cancelSearchBtn" style="width:100%; margin-top: 10px;">إلغاء البحث</button>
     </div>
-  </div>
+  `;
 
-  <div class="pick">
-    <label class="field"><span>القطاع</span><select id="sSec">${opt(secs,st.sector)}</select></label>
-    <label class="field"><span>البلوك</span><select id="sBlk">${opt(blks,st.blk)}</select></label>
-    <label class="field"><span>العمارة</span>
-      <select id="sBld">
-        <option value="">— اختر —</option>
-        ${Object.keys(g).sort((a,b)=> Number(a)-Number(b)).map(b => `<option value="${b}" ${st.open === b ? 'selected' : ''}>${b}</option>`).join('')}
-      </select>
-    </label>
+  let html = `
+  <div class="view-mode" style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <button class="btn ${currentMode === 'search-name' ? '' : 'ghost'}" id="btnSearchName" style="flex:1; font-size:14px;">🔍 بحث بالاسم</button>
+    <button class="btn ${currentMode === 'search-code' ? '' : 'ghost'}" id="btnSearchCode" style="flex:1; font-size:14px;">🔍 بحث برقم المشترك</button>
   </div>
-  <div class="view-mode" style="display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 10px;">
-    <button class="btn ghost sm" id="modeList" type="button" style="flex: 1;">عرض القائمة</button>
-    <input id="bldIn" class="num2" type="text" inputmode="numeric" maxlength="2" placeholder="رقم العمارة" value="${st.open||''}" style="flex: 1; min-height: 40px; text-align: center; font-weight: 800;">
-  </div>
-  <p class="sum" style="text-align:center; color:var(--mute); margin: 10px 0;">${t.n} شقة · ${t.count} فاتورة · <b>${money(t.value)}</b> جنيه</p>
-  <div class="blist" id="mainBlist">`;
+  ${buildSearchHtml()}
+  <div id="mainResultsArea">
+    <div class="pick">
+      <label class="field"><span>القطاع</span><select id="sSec">${opt(secs,st.sector)}</select></label>
+      <label class="field"><span>البلوك</span><select id="sBlk">${opt(blks,st.blk)}</select></label>
+      <label class="field"><span>العمارة</span>
+        <select id="sBld">
+          ${Object.keys(g).sort((a,b)=> Number(a)-Number(b)).map(b => `<option value="${b}" ${st.open === b ? 'selected' : ''}>${b}</option>`).join('')}
+        </select>
+      </label>
+    </div>
+    <div class="view-mode" style="display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 10px;">
+      <button class="btn ghost sm" id="modeList" type="button" style="flex: 1;">عرض القائمة</button>
+      <input id="bldIn" class="num2" type="text" inputmode="numeric" maxlength="2" placeholder="رقم العمارة" value="${st.open||''}" style="flex: 1; min-height: 40px; text-align: center; font-weight: 800;">
+    </div>
+    <p class="sum">${t.n} شقة · ${t.count} فاتورة · <b>${money(t.value)}</b> جنيه</p>
+    <div class="blist" id="mainBlist">`;
 
   if (st.open && g[st.open]){
     st.bld = st.open;
@@ -399,11 +417,18 @@ export async function renderHome(el){
     Object.keys(g).sort(srt).forEach(b => {
       const x = tot(g[b]);
       const o = st.open === b;
+      let hiClass = '';
       const cells = `<b>عمارة ${b}</b><span>${x.n} شقة</span><span>${x.count} فاتورة</span><strong>${money(x.value)}</strong>`;
-      html += `<div class="brow prow ${o?'open':''}" data-b="${b}" role="button" tabindex="0">${cells}</div>`;
+      html += `<div class="brow prow ${o?'open':''} ${hiClass}" data-b="${b}" role="button" tabindex="0">${cells}</div>`;
     });
     html += `</div></div>`;
   }
+
+   html += `
+  <div style="margin-top: 15px;">
+    <button class="btn ghost" id="mainSearchBtn" style="width: 100%; font-size: 14px; background: var(--collector-soft); color: var(--collector);">🔍 بحث شامل</button>
+  </div>
+  `;
 
   el.innerHTML = html;
 
@@ -414,6 +439,7 @@ export async function renderHome(el){
   const mainBlist = el.querySelector('#mainBlist');
 
   el.querySelector('#btnSearchName').onclick = () => {
+    currentMode = 'search-name';
     searchPanel.style.display = 'block';
     nameWrap.style.display = 'block';
     codeWrap.style.display = 'none';
@@ -424,6 +450,7 @@ export async function renderHome(el){
   };
 
   el.querySelector('#btnSearchCode').onclick = () => {
+    currentMode = 'search-code';
     searchPanel.style.display = 'block';
     nameWrap.style.display = 'none';
     codeWrap.style.display = 'block';
@@ -433,6 +460,7 @@ export async function renderHome(el){
   };
 
   el.querySelector('#cancelSearchBtn').onclick = () => {
+    currentMode = 'list';
     searchPanel.style.display = 'none';
     el.querySelector('#btnSearchName').classList.add('ghost');
     el.querySelector('#btnSearchCode').classList.add('ghost');
@@ -445,7 +473,7 @@ export async function renderHome(el){
     const words = q.split(' ').filter(Boolean);
     const m = st.S.filter(s => 
       !st.paid.has(key(s)) && 
-      s.inRoute &&
+      (document.querySelector('input[name="mScope"]:checked').value === 'all' || s.inRoute) &&
       words.every(w => fz(s.name || '').includes(w))
     );
     
@@ -483,6 +511,7 @@ export async function renderHome(el){
 
   el.querySelector('#mainSearchBtnName').onclick = doNameSearch;
   el.querySelector('#mainSearchBtnCode').onclick = doCodeSearch;
+  inputName.onkeydown = (e) => { if (e.key === 'Enter') doNameSearch(); };
 
   const bindSearchResultClicks = () => {
     mainBlist.querySelectorAll('[data-bld]').forEach(btn => {
@@ -529,11 +558,21 @@ export async function renderHome(el){
     if (ov) bind(el, ov.a, ov.v, () => renderHome(el));
   }
 
+  const mainSearchBtn = el.querySelector('#mainSearchBtn');
+  if (mainSearchBtn) {
+    mainSearchBtn.onclick = () => {
+      document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('on'));
+      const ev = new CustomEvent('openTab', {detail:{tab:'searchFromHome'}});
+      window.dispatchEvent(ev);
+    };
+  }
+
   scrollTo(0, y);
 }
 
 /* ===== صفحة ما تم تحصيله ===== */
 export async function renderLedger(el, reload, exp){
+  back(false);
   await refresh();
   const e = await list();
   const td = e.filter(x => ldate(x.time) === ldate(new Date()));
@@ -581,6 +620,43 @@ export async function renderLedger(el, reload, exp){
       <button class="btn ghost" id="rl" type="button">تحديث الملف</button>
     </div>
   </div>`;
+
+  // أرشيف السداد المقدم
+  const advanceClients = [];
+  st.adv.forEach((balance, k) => {
+    if (balance > 0) {
+      const s = st.S.find(item => key(item) === k);
+      if (s) advanceClients.push({ ...s, advanceBalance: balance });
+    }
+  });
+  
+  if (advanceClients.length > 0) {
+    advanceClients.sort((a, b) => b.advanceBalance - a.advanceBalance);
+    let advHtml = `
+      <div class="card" style="margin-top: 15px; border: 1.5px solid var(--advance, #7c3aed); border-radius: var(--r-lg);">
+        <h2 style="color: var(--advance, #7c3aed);">💰 أرشيف السداد المقدم</h2>
+        <div class="ledger-list">
+    `;
+    advanceClients.forEach(s => {
+      advHtml += `
+        <div class="led-row" style="border-inline-start-color: var(--advance, #7c3aed);">
+          <div class="led-main">
+            <span class="led-apt" style="background: var(--advance, #7c3aed);">${s.apt || '?'}</span>
+            <div class="led-info">
+              <div class="led-name">${esc(s.name || 'بدون اسم')}</div>
+              <div class="led-meta">قطاع ${s.sector||''} · بلوك ${s.blk||''} · عمارة ${s.bld||''}</div>
+            </div>
+            <div class="led-right">
+              <div class="led-tags"><span class="tag" style="background: var(--advance, #7c3aed); color: #fff;">مقدم</span></div>
+              <div class="led-amount" style="color: var(--advance, #7c3aed);">${money(s.advanceBalance)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    advHtml += `</div></div>`;
+    el.insertAdjacentHTML('beforeend', advHtml);
+  }
 
   el.querySelectorAll('[data-m]').forEach(btn => {
     btn.onclick = ev => {
