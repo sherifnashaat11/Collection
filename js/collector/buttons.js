@@ -132,17 +132,16 @@ export async function renderMenu(){
     };
   }
 
-  // تبديل الوضع الداكن
+  // ===== التعديل: تبديل الوضع الداكن/الفاتح =====
   const btnTheme = m.querySelector('[data-theme-toggle]');
   if (btnTheme) {
     btnTheme.onclick = () => {
       m.hidden = true;
       const isDark = document.body.getAttribute('data-theme') === 'dark';
 
-
-
       if (isDark) {
-        document.body.removeAttribute('data-theme');
+        // التعديل: setAttribute بدل removeAttribute لتفعيل كتلة body[data-theme="light"] في base.css
+        document.body.setAttribute('data-theme', 'light');
         localStorage.setItem('app-theme', 'light');
         showToast('تم تفعيل الوضع الفاتح');
       } else {
@@ -150,9 +149,6 @@ export async function renderMenu(){
         localStorage.setItem('app-theme', 'dark');
         showToast('تم تفعيل الوضع الداكن');
       }
-
-
-
 
       // إعادة رسم الصفحة الحالية لتطبيق الألوان
       renderMenu(); 
