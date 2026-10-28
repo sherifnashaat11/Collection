@@ -233,5 +233,36 @@ document.addEventListener('touchend', (e) => {
   }
 }, { passive: true });
 
+
+
+/* ===== زر الخروج (SVG) مع تأكيد + fallback ===== */
+const exitBtn = document.getElementById('exitBtn');
+if (exitBtn){
+  exitBtn.onclick = async () => {
+    if (!confirm('هل تريد الخروج من التطبيق؟')) return;
+    try{
+      // محاولة إغلاق النافذة (يعمل على PWA المثبتة على بعض الأجهزة)
+      window.close();
+      // إن لم تُغلق (الموبايل)، انتقل لصفحة الدخول بعد مسح الجلسة
+      setTimeout(async () => {
+        try{
+          const {disable} = await import('./lock.js');
+          await disable();
+        }catch(e){}
+        try{
+          const {del} = await import('../core/db.js');
+          await del('meta', 'auth');
+        }catch(e){}
+        location.replace('login.html');
+      }, 200);
+    }catch(e){
+      location.replace('login.html');
+    }
+  };
+}
+
+
+
+
 console.log('[app] started');
 boot();
