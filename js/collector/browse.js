@@ -6,7 +6,7 @@ import { openPage } from './buttons.js';
 import { getManual, saveManual } from './names.js';
 import { choose } from './personal.js';
 import { monthOptions } from './monthly.js';
-import { searchKey } from '../core/normalize.js'; // نحتاجه للبحث
+import { searchKey } from '../core/normalize.js';
 
 export const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -22,7 +22,7 @@ const back = v => { const b = document.getElementById('back'); if (b) b.hidden =
 const num = s => +String(s||'').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const due = s => Math.max(0, s.value - (st.adv.get(key(s))||0));
 const tot = a => totals(a, due);
-const fz = s => searchKey(s).replace(/[خج]/g, 'ح').replace(/ذ/g, 'د'); // للبحث
+const fz = s => searchKey(s).replace(/[خج]/g, 'ح').replace(/ذ/g, 'د');
 
 export async function refresh(){
   const mn = await getManual();
@@ -54,7 +54,6 @@ export function inFilter(kind, k){
   return st.filter.matches.has(kind + ':' + k);
 }
 
-/* ===== دالة تأكيد الطباعة بعد السداد ===== */
 function askPrint(entries) {
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -88,7 +87,6 @@ function askPrint(entries) {
   });
 }
 
-/* ===== التصميم الجديد لبطاقات الشقق ===== */
 function aptsView(a){
   const ch = a.filter(s => st.sel.has(key(s)));
   const ct = tot(ch);
@@ -162,7 +160,6 @@ function aptsView(a){
   return {html: cards, ch, ct, allTot, barHtml};
 }
 
-/* ===== السداد الجزئي ===== */
 function partialDialog(s){
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -222,7 +219,6 @@ function partialDialog(s){
   });
 }
 
-/* ===== ربط أحداث الشقق ===== */
 function bind(el, a, v, again){
   el.querySelectorAll('[data-k]').forEach(c => {
     c.onchange = () => { c.checked ? st.sel.add(c.dataset.k) : st.sel.delete(c.dataset.k); again(); };
@@ -316,7 +312,6 @@ function bind(el, a, v, again){
   };
 }
 
-/* ===== الصفحة الرئيسية (التحصيل + البحث) ===== */
 export async function renderHome(el){
   const y = scrollY; back(false);
   const w = work();
@@ -525,13 +520,50 @@ export async function renderHome(el){
   };
 
   if (!ov) {
+    const sBldEl = el.querySelector('#sBld');
+    const bldInEl = el.querySelector('#bldIn');
+
+    // ✅ التعديل هنا: ربط القائمة والمربع ببعضهما بدون تجميد
+    if (sBldEl && bldInEl) {
+      sBldEl.addEventListener('change', function() {
+        bldInEl.value = this.value; // كتابة القيمة في المربع عند الاختيار من القائمة
+      });
+
+      bldInEl.addEventListener('input', function() {
+        const typed = this.value;
+        // تحديث القائمة المنسدلة فوراً بمجرد الكتابة
+        for (let i = 0; i < sBldEl.options.length; i++) {
+          if (sBldEl.options[i].value === typed) {
+            sBldEl.selectedIndex = i;
+            break;
+          }
+        }
+        // لو المستخدم كتب رقم واحد، بنضيف صفر عشان يتوافق مع التنسيق (مثلاً 4 تصبح 04)
+        if (typed.length === 1) {
+          const padded = '0' + typed;
+          for (let i = 0; i < sBldEl.options.length; i++) {
+            if (sBldEl.options[i].value === padded) {
+              sBldEl.selectedIndex = i;
+              break;
+            }
+          }
+        }
+        
+        // فتح العمارة فوراً لو الرقم موجود في القائمة
+        if (sBldEl.value && sBldEl.value === typed) {
+          st.open = typed; 
+          st.bld = typed;
+          renderHome(el);
+        }
+      });
+    }
+    // ==========================================
+
     el.querySelector('#sSec').onchange = e => { st.sector = e.target.value; st.open = null; renderHome(el); };
     el.querySelector('#sBlk').onchange = e => { st.blk = e.target.value; st.open = null; renderHome(el); };
     el.querySelector('#sBld').onchange = e => { st.open = e.target.value; st.bld = e.target.value; renderHome(el); };
     el.querySelector('#modeList').onclick = () => { st.open = null; renderHome(el); };
-    el.querySelector('#bldIn').addEventListener('input', (e) => {
-      if (e.target.value.length === 2) { st.open = e.target.value; st.bld = e.target.value; renderHome(el); }
-    });
+    
     el.querySelectorAll('[data-b]').forEach(btn => {
       btn.onclick = () => { st.sel.clear(); st.open = btn.dataset.b; st.bld = st.open; renderHome(el); };
     });
@@ -570,7 +602,6 @@ export async function renderHome(el){
   scrollTo(0, y);
 }
 
-/* ===== صفحة ما تم تحصيله ===== */
 export async function renderLedger(el, reload, exp){
   back(false);
   await refresh();
@@ -621,7 +652,6 @@ export async function renderLedger(el, reload, exp){
     </div>
   </div>`;
 
-  // أرشيف السداد المقدم
   const advanceClients = [];
   st.adv.forEach((balance, k) => {
     if (balance > 0) {
