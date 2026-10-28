@@ -5,49 +5,142 @@
    ============================================================ */
 
 /* ===== الهيدر العلوي ===== */
+
+
+/* ===== الهيدر العلوي (الترتيب الجديد) ===== */
 .top{
   background: var(--grad-top);
   color: #e7eff5;
-  padding: 1rem 1rem 1.4rem;
+  padding: .9rem 1rem 1.3rem;
   border-bottom: 5px solid var(--ember);
   box-shadow: var(--shadow-md);
 }
-.top>div{
+.top-inner{
   max-width: 640px;
   margin: auto;
   display: flex;
   align-items: center;
-  gap: .7rem;
+  gap: .6rem;
 }
-.top svg{
-  width: 40px; height: 40px;
+
+/* بداية (يمين في RTL): خروج + شبكة */
+.top-start{
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex: none;
+}
+
+/* المنتصف: شعار + عنوان */
+.top-center{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-width: 0;
+}
+.top-center svg{
+  width: 36px;
+  height: 36px;
   flex: none;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
+.top-titles{
+  text-align: center;
+  min-width: 0;
+}
 .top h1{
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   line-height: 1.2;
   color: #fff;
+  white-space: nowrap;
 }
 .top p{
-  font-size: .85rem;
+  font-size: .78rem;
   color: #9db6c8;
-  margin-top: .1rem;
+  margin-top: .05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
+
+/* النهاية (يسار في RTL): قائمة */
+.top-end{
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex: none;
+}
+
+/* زر أيقوني */
+.ico{
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 0;
+  border-radius: var(--r-md);
+  width: 42px; height: 42px;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s;
+}
+.ico:hover{ background: rgba(255,255,255,0.2); }
+
+/* زر الطاقة (SVG) */
+.power-btn{
+  color: #fff;
+  background: rgba(255,255,255,0.12);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, transform .12s;
+}
+.power-btn:hover{ background: rgba(255,255,255,0.22); }
+.power-btn:active{ transform: scale(.94); }
+
+/* مؤشر الشبكة */
 .pill{
-  margin-inline-start: auto;
-  font-size: .8rem;
-  padding: .2rem .7rem;
+  font-size: .78rem;
+  padding: .25rem .7rem;
   border-radius: 99px;
   background: rgba(255,255,255,0.12);
   color: #bfe0f5;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+}
+.pill::before{
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .9;
 }
 .pill[data-on=false]{
   background: var(--ember);
   color: #0f2438;
   font-weight: 700;
 }
+
+/* على الموبايل: تصغير */
+@media (max-width: 420px){
+  .top{ padding: .7rem .7rem 1.2rem; }
+  .top-center svg{ width: 30px; height: 30px; }
+  .top h1{ font-size: 1rem; }
+  .top p{ font-size: .7rem; max-width: 140px; }
+  .ico, .power-btn{ width: 38px; height: 38px; font-size: 1.15rem; }
+  .pill{ font-size: .7rem; padding: .2rem .55rem; }
+}
+
 
 /* ===== الحاوية الرئيسية ===== */
 main{
