@@ -898,6 +898,7 @@ dialog.viewer iframe{
   font-size: .85rem;
   min-height: 40px;
 }
+
 /* ===== نافذة تصدير Excel ===== */
 .export-dialog{
   max-width: 520px;
@@ -1064,7 +1065,7 @@ dialog.viewer iframe{
 }
 
 /* ============================================================
-   التعديل الجديد: 4 دورات لونية للشقق (بدل فردي/زوجي)
+   4 دورات لونية للشقق (بدل فردي/زوجي)
    - تعتمد على --apt-tint الممرَّر من JS حسب ترتيب الظهور
    - التلوين يبقى متصلاً عند اختفاء/سداد شقة
    ============================================================ */
@@ -1072,12 +1073,10 @@ dialog.viewer iframe{
   background-color: color-mix(in srgb, var(--collector) var(--apt-tint, 0%), var(--card)) !important;
   color: var(--ink);
 }
-/* الحالة المختارة تتغلب على التلوين الدوري */
 .apt-card.on{
   background-color: color-mix(in srgb, var(--collector) 22%, var(--card)) !important;
   border-color: var(--collector);
 }
-/* تمييز الفلترة (hi-apt / hi-bld) له الأولوية على التلوين الدوري */
 .apt-card.hi-apt{
   background-color: color-mix(in srgb, var(--hl-apt) 22%, var(--card)) !important;
   border-color: var(--hl-apt);
@@ -1105,55 +1104,46 @@ dialog.viewer iframe{
 }
 
 /* ============================================================
-   الوضع الداكن (Dark Mode) — نِسَب أعلى لتبقى الفروق مرئية
+   الأوضاع الداكنة (dark + highcontrast) — تلوين دوري بنِسَب أعلى
    ============================================================ */
-body[data-theme="dark"] {
-  --paper: #0f172a;
-  --paper-2: #1e293b;
-  --card: #1e293b;
-  --line: #334155;
-  --ink: #f1f5f9;
-  --mute: #94a3b8;
-  --soft: #64748b;
-  --collector: #818cf8;
-  --ember: #fbbf24;
-  --ok: #34d399;
-  --bad: #f87171;
-}
-
-body[data-theme="dark"] .apt-card{
+body[data-theme="dark"] .apt-card,
+body[data-theme="highcontrast"] .apt-card{
   background-color: color-mix(in srgb, var(--collector) calc(var(--apt-tint, 0%) * 1.6), var(--card)) !important;
   color: var(--ink);
 }
-body[data-theme="dark"] .apt-card.on{
+body[data-theme="dark"] .apt-card.on,
+body[data-theme="highcontrast"] .apt-card.on{
   background-color: color-mix(in srgb, var(--collector) 34%, var(--card)) !important;
 }
-body[data-theme="dark"] .apt-card.hi-apt{
+body[data-theme="dark"] .apt-card.hi-apt,
+body[data-theme="highcontrast"] .apt-card.hi-apt{
   background-color: color-mix(in srgb, var(--hl-apt) 30%, var(--card)) !important;
 }
-body[data-theme="dark"] .apt-card.hi-bld{
+body[data-theme="dark"] .apt-card.hi-bld,
+body[data-theme="highcontrast"] .apt-card.hi-bld{
   background-color: color-mix(in srgb, var(--hl-bld) 30%, var(--card)) !important;
 }
-body[data-theme="dark"] .brow.prow{
+body[data-theme="dark"] .brow.prow,
+body[data-theme="highcontrast"] .brow.prow{
   background-color: color-mix(in srgb, var(--collector) calc(var(--row-tint, 0%) * 1.6), var(--card));
 }
-
 body[data-theme="dark"] .apt-card .apt-row-1 .apt-name,
-body[data-theme="dark"] .apt-card .apt-row-2 .apt-count{
-  color: #f1f5f9 !important;
+body[data-theme="dark"] .apt-card .apt-row-2 .apt-count,
+body[data-theme="highcontrast"] .apt-card .apt-row-1 .apt-name,
+body[data-theme="highcontrast"] .apt-card .apt-row-2 .apt-count{
+  color: var(--ink) !important;
 }
-
-body[data-theme="dark"] .top,
-body[data-theme="dark"] .tabs {
-  background: linear-gradient(135deg, #0b1120, #1e293b);
-}
-
-body[data-theme="dark"] .apt-card .apt-row-1 .apt-val-btn {
+body[data-theme="dark"] .apt-card .apt-row-1 .apt-val-btn,
+body[data-theme="highcontrast"] .apt-card .apt-row-1 .apt-val-btn{
   background: color-mix(in srgb, var(--ember) 20%, var(--card));
   color: var(--ember);
 }
-
-
+body[data-theme="dark"] .top,
+body[data-theme="dark"] .tabs,
+body[data-theme="highcontrast"] .top,
+body[data-theme="highcontrast"] .tabs{
+  background: var(--grad-top);
+}
 
 /* جعل التطبيق يأخذ الشاشة كاملة (Full Screen) */
 html, body {
@@ -1161,8 +1151,8 @@ html, body {
   width: 100%;
   margin: 0;
   padding: 0;
-  overscroll-behavior-y: none; /* منع السحب لأسفل لتحديث الصفحة */
-  user-select: none; /* منع تحديد النصوص عند السحب */
+  overscroll-behavior-y: none;
+  user-select: none;
 }
 
 /* منع ظهور شريط التمرير المزعج */
@@ -1186,7 +1176,7 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
 /* إصلاح القائمة المنسدلة (⋮) لتكون في أقصى اليمين */
 .menu {
   top: 70px;
-  inset-inline-end: 10px; /* بدلاً من inset-inline-start */
+  inset-inline-end: 10px;
   left: auto !important;
 }
 
@@ -1197,41 +1187,151 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
   display: flex;
   justify-content: space-around;
   padding: 0;
-  height: 20px; /* ارتفاع صغير جداً */
+  height: 20px;
   box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
 }
 .tabs button {
   flex: 1;
   background: none;
   border: none;
-  border-top: 4px solid transparent; /* الخط المضيء */
-  color: transparent; /* إخفاء النص */
+  border-top: 4px solid transparent;
+  color: transparent;
   padding: 0;
   cursor: pointer;
   transition: border-color 0.3s;
 }
 .tabs button.on {
-  border-top-color: var(--collector); /* لون الخط المضيء */
+  border-top-color: var(--collector);
 }
-/* إخفاء الأيقونات القديمة */
 .tabs button .ico-emoji { display: none; }
-
-
-
 
 /* إزالة الخلفية الداكنة من الشريط السفلي */
 .tabs {
-  background: transparent !important; /* إزالة الخلفية */
-  box-shadow: none !important;        /* إزالة الظل القديم */
-  border-top: none !important;        /* إزالة الخط العلوي */
-  padding-bottom: env(safe-area-inset-bottom); /* دعم شاشات الآيفون */
+  background: transparent !important;
+  box-shadow: none !important;
+  border-top: none !important;
+  padding-bottom: env(safe-area-inset-bottom);
 }
-
-/* الحفاظ على وضوح الأزرار */
 .tabs button {
-  background: rgba(255, 255, 255, 0.85); /* خلفية شبه شفافة للزر نفسه */
+  background: rgba(255, 255, 255, 0.85);
   margin: 0 2px;
   border-radius: 12px 12px 0 0;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.1); /* ظل خفيف جداً */
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
   padding: 8px 2px;
+}
+
+/* ============================================================
+   قائمة أوضاع العرض في القائمة المنسدلة
+   ============================================================ */
+.themes-group{
+  display: grid;
+  gap: 0;
+}
+.menu .themes-toggle{
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .8rem .9rem !important;
+  min-height: 48px !important;
+  background: none;
+  border: 0;
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  width: 100%;
+  text-align: right;
+  transition: background .15s;
+}
+.menu .themes-toggle:hover{ background: var(--paper-2); }
+.menu .themes-toggle .themes-current{
+  font-size: .78rem;
+  color: var(--collector);
+  font-weight: 700;
+  background: var(--collector-soft);
+  padding: .1rem .5rem;
+  border-radius: 99px;
+  margin-inline-start: auto;
+}
+.menu .themes-toggle .themes-arrow{
+  color: var(--mute);
+  font-size: .9rem;
+  transition: transform .2s;
+}
+.themes-list{
+  display: grid;
+  gap: .15rem;
+  padding: .25rem 0 .4rem;
+  margin-inline-start: .6rem;
+  border-inline-start: 2px solid var(--line);
+  padding-inline-start: .5rem;
+}
+.themes-list[hidden]{ display: none; }
+.menu .theme-btn{
+  display: flex !important;
+  align-items: center;
+  gap: .6rem;
+  padding: .55rem .6rem !important;
+  min-height: 48px !important;
+  background: none;
+  border: 0;
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: .9rem;
+  color: var(--ink);
+  cursor: pointer;
+  width: 100%;
+  text-align: right;
+  transition: background .15s;
+}
+.menu .theme-btn:hover{ background: var(--paper-2); }
+.menu .theme-btn.active{
+  background: var(--collector-soft);
+  font-weight: 800;
+}
+.menu .theme-btn .theme-preview{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid;
+  font-weight: 800;
+  font-size: .8rem;
+  flex: none;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+.menu .theme-btn .theme-txt{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .05rem;
+  flex: 1;
+  min-width: 0;
+}
+.menu .theme-btn .theme-lbl{
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--ink);
+}
+.menu .theme-btn .theme-desc{
+  font-size: .72rem;
+  color: var(--mute);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.menu .theme-btn .theme-chk{
+  color: var(--collector);
+  font-weight: 800;
+  font-size: 1rem;
+  min-width: 1.2rem;
+  text-align: center;
+  flex: none;
 }
