@@ -127,12 +127,15 @@ function aptsView(a){
   
   
   
-  const cards = a.map(s => {
+  // ====== التعديل: 4 دورات لونية حسب الترتيب (idx) بدل رقم الشقة ======
+  const TINTS = [0, 4, 8, 12]; // نِسَب تظليل متدرجة للوضع الفاتح
+  const cards = a.map((s, idx) => {
     const k = key(s);
     const b = st.adv.get(k) || 0;
     const selected = st.sel.has(k);
     const nameHtml = s.name ? esc(s.name) : '<em class="empty-name">بدون اسم</em>';
-    const isOdd = Number(s.apt) % 2 === 1 ? '1' : '0';
+    const cycle = idx % 4;                // 0..3 دورياً حسب الترتيب الظاهر
+    const pct   = TINTS[cycle];
     const partial = (s.count || 0) > 1;
     let hiClass = '';
     if (st.filter){
@@ -140,7 +143,7 @@ function aptsView(a){
       else if (st.filter.kind === 'bld' && st.filter.matches.has('bld:' + s.sector + '|' + s.blk + '|' + s.bld)) hiClass = 'hi-bld';
     }
     
-    return `<div class="apt-card ${selected?'on':''} ${hiClass}" data-card="${k}" data-apt-odd="${isOdd}">
+    return `<div class="apt-card ${selected?'on':''} ${hiClass}" data-card="${k}" data-cycle="${cycle}" style="--apt-tint:${pct}%">
       <div class="apt-row-1">
         <div class="apt-name" data-nm="${k}">${nameHtml}</div>
         <button class="apt-val-btn" data-p="${k}" type="button">${money(due(s))}</button>
@@ -471,9 +474,13 @@ export async function renderHome(el){
       ${ov.v.barHtml}
     </div>`;
   } else {
-    Object.keys(g).sort(srt).forEach(b => {
+    // ====== التعديل: إضافة data-cycle و --row-tint دورياً للعمارات أيضاً ======
+    const ROW_TINTS = [0, 3, 6, 9];
+    Object.keys(g).sort(srt).forEach((b, idx) => {
       const x = tot(g[b]);
       const o = st.open === b;
+      const cycle = idx % 4;
+      const rowPct = ROW_TINTS[cycle];
       let hiClass = '';
       if (st.filter){
         if (st.filter.kind === 'blk' && st.filter.matches.has('blk:' + st.sector + '|' + st.blk)) hiClass = 'hi';
@@ -484,7 +491,7 @@ export async function renderHome(el){
         }
       }
       const cells = `<b>عمارة ${b}</b><span>${x.n} شقة</span><span>${x.count} فاتورة</span><strong>${money(x.value)}</strong>`;
-      html += `<div class="brow prow ${o?'open':''} ${hiClass}" data-b="${b}" role="button" tabindex="0">${cells}</div>`;
+      html += `<div class="brow prow ${o?'open':''} ${hiClass}" data-b="${b}" data-cycle="${cycle}" style="--row-tint:${rowPct}%" role="button" tabindex="0">${cells}</div>`;
     });
   }
 
