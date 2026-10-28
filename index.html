@@ -16,15 +16,9 @@
 <header class="top">
   <div class="top-inner">
 
-    <!-- أقصى اليمين: زر الخروج + مؤشر الشبكة -->
+    <!-- أقصى اليمين: زر القائمة -->
     <div class="top-start">
-      <button id="exitBtn" class="ico power-btn" aria-label="خروج" title="خروج من التطبيق">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-          <path d="M12 3v9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
-          <path d="M6.4 6.4a8 8 0 1 0 11.2 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
-        </svg>
-      </button>
-      <span class="pill" id="net">…</span>
+      <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
     </div>
 
     <!-- المنتصف: الشعار + العنوان + المستخدم -->
@@ -39,9 +33,15 @@
       </div>
     </div>
 
-    <!-- أقصى اليسار: زر القائمة -->
+    <!-- أقصى اليسار: زر الخروج + مؤشر الشبكة -->
     <div class="top-end">
-      <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
+      <span class="pill" id="net">…</span>
+      <button id="exitBtn" class="ico power-btn" aria-label="خروج" title="خروج من التطبيق">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M12 3v9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          <path d="M6.4 6.4a8 8 0 1 0 11.2 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        </svg>
+      </button>
     </div>
 
   </div>
