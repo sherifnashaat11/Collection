@@ -328,15 +328,11 @@ export async function renderHome(el){
   const blks = [...new Set(w.filter(s => s.sector===st.sector).map(s => s.blk))].sort(srt);
   if (!blks.includes(st.blk)) st.blk = blks[0];
   
-  // إجمالي البيانات للقطاع والبلوك المختارين
   const rows = w.filter(s => s.sector===st.sector && s.blk===st.blk);
   const g = {};
   rows.forEach(s => (g[s.bld] = g[s.bld] || []).push(s));
   
-  // قائمة العمارات المتاحة للفتح (الغير مسددة)
   const availableBlds = Object.keys(g).sort(srt);
-  
-  // العمارات المسددة (لإظهار رسالة الخطأ)
   const allBlds = [...new Set(st.S.filter(s => s.sector === st.sector && s.blk === st.blk).map(s => s.bld))].sort(srt);
   const paidBlds = allBlds.filter(b => !availableBlds.includes(b));
 
@@ -436,16 +432,13 @@ export async function renderHome(el){
 
   el.innerHTML = html;
 
-  // ✅ دالة مركزية للتحكم في فتح العمارة
   const handleBuildingSelection = (targetValue) => {
     if (!targetValue) return;
     
     let finalTarget = targetValue;
     if (targetValue.length === 1) finalTarget = '0' + targetValue;
 
-    // 1. التحقق إذا كانت العمارة متاحة (غير مسددة)
     if (availableBlds.includes(finalTarget)) {
-      // 2. مزامنة القائمة
       const sBldEl = el.querySelector('#sBld');
       if (sBldEl) {
           for (let i = 0; i < sBldEl.options.length; i++) {
@@ -455,17 +448,14 @@ export async function renderHome(el){
               }
           }
       }
-      // 3. مزامنة مربع النص
       const bldInEl = el.querySelector('#bldIn');
       if (bldInEl && bldInEl.value !== finalTarget) {
           bldInEl.value = finalTarget;
       }
 
-      // 4. فتح العمارة
       st.open = finalTarget;
       st.bld = finalTarget;
       
-      // تجنب إعادة رسم الصفحة إذا كنا واقفين بالفعل على نفس العمارة
       if (el.querySelector('#buildingView') && st.open === finalTarget) return; 
       
       const yScroll = window.scrollY;
@@ -473,12 +463,10 @@ export async function renderHome(el){
       window.scrollTo(0, yScroll);
       
     } else if (paidBlds.includes(finalTarget)) {
-      // إذا كانت العمارة مسددة
       toast(`عمارة ${finalTarget} مسددة بالكامل.`);
       const bldInEl = el.querySelector('#bldIn');
-      if (bldInEl) bldInEl.value = st.open || ''; // إعادة المربع للقيمة السابقة
+      if (bldInEl) bldInEl.value = st.open || ''; 
     } else {
-      // إذا لم تكن العمارة موجودة في الأساس
       toast(`العمارة ${finalTarget} غير موجودة.`);
       const bldInEl = el.querySelector('#bldIn');
       if (bldInEl) bldInEl.value = st.open || ''; 
