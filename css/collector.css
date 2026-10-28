@@ -965,6 +965,9 @@ dialog.viewer iframe{
 
 
 
+
+
+
 /* ============================================================
    التصميم الجديد لبطاقة الشقة (سطرين)
    ============================================================ */
@@ -1061,17 +1064,48 @@ dialog.viewer iframe{
 }
 
 /* ============================================================
-   تلوين متبادل للشقق (فردي / زوجي)
+   التعديل الجديد: 4 دورات لونية للشقق (بدل فردي/زوجي)
+   - تعتمد على --apt-tint الممرَّر من JS حسب ترتيب الظهور
+   - التلوين يبقى متصلاً عند اختفاء/سداد شقة
    ============================================================ */
-.apt-card[data-apt-odd="1"] {
-  background-color: #ffffff !important;
+.apt-card{
+  background-color: color-mix(in srgb, var(--collector) var(--apt-tint, 0%), var(--card)) !important;
+  color: var(--ink);
 }
-.apt-card[data-apt-odd="0"] {
-  background-color: #f1f5f9 !important; /* رمادي فاتح جداً */
+/* الحالة المختارة تتغلب على التلوين الدوري */
+.apt-card.on{
+  background-color: color-mix(in srgb, var(--collector) 22%, var(--card)) !important;
+  border-color: var(--collector);
+}
+/* تمييز الفلترة (hi-apt / hi-bld) له الأولوية على التلوين الدوري */
+.apt-card.hi-apt{
+  background-color: color-mix(in srgb, var(--hl-apt) 22%, var(--card)) !important;
+  border-color: var(--hl-apt);
+}
+.apt-card.hi-bld{
+  background-color: color-mix(in srgb, var(--hl-bld) 22%, var(--card)) !important;
+  border-color: var(--hl-bld);
+}
+
+/* ===== عمارات: 4 دورات لونية أيضاً (تعتمد على --row-tint) ===== */
+.brow.prow{
+  background-color: color-mix(in srgb, var(--collector) var(--row-tint, 0%), var(--card));
+}
+.brow.hi{
+  background: color-mix(in srgb, var(--hl-blk) 16%, var(--card)) !important;
+  border-inline-start-color: var(--hl-blk);
 }
 
 /* ============================================================
-   الوضع الداكن (Dark Mode)
+   ضمان تباين النص في كل الأوضاع
+   ============================================================ */
+.apt-card .apt-row-1 .apt-name,
+.apt-card .apt-row-2 .apt-count{
+  color: var(--ink) !important;
+}
+
+/* ============================================================
+   الوضع الداكن (Dark Mode) — نِسَب أعلى لتبقى الفروق مرئية
    ============================================================ */
 body[data-theme="dark"] {
   --paper: #0f172a;
@@ -1087,11 +1121,26 @@ body[data-theme="dark"] {
   --bad: #f87171;
 }
 
-body[data-theme="dark"] .apt-card[data-apt-odd="1"] {
-  background-color: #1e293b !important;
+body[data-theme="dark"] .apt-card{
+  background-color: color-mix(in srgb, var(--collector) calc(var(--apt-tint, 0%) * 1.6), var(--card)) !important;
+  color: var(--ink);
 }
-body[data-theme="dark"] .apt-card[data-apt-odd="0"] {
-  background-color: #0f172a !important;
+body[data-theme="dark"] .apt-card.on{
+  background-color: color-mix(in srgb, var(--collector) 34%, var(--card)) !important;
+}
+body[data-theme="dark"] .apt-card.hi-apt{
+  background-color: color-mix(in srgb, var(--hl-apt) 30%, var(--card)) !important;
+}
+body[data-theme="dark"] .apt-card.hi-bld{
+  background-color: color-mix(in srgb, var(--hl-bld) 30%, var(--card)) !important;
+}
+body[data-theme="dark"] .brow.prow{
+  background-color: color-mix(in srgb, var(--collector) calc(var(--row-tint, 0%) * 1.6), var(--card));
+}
+
+body[data-theme="dark"] .apt-card .apt-row-1 .apt-name,
+body[data-theme="dark"] .apt-card .apt-row-2 .apt-count{
+  color: #f1f5f9 !important;
 }
 
 body[data-theme="dark"] .top,
@@ -1186,6 +1235,3 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
   box-shadow: 0 -2px 10px rgba(0,0,0,0.1); /* ظل خفيف جداً */
   padding: 8px 2px;
 }
-
-
-
