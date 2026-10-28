@@ -327,9 +327,19 @@ export async function renderHome(el){
   if (!secs.includes(st.sector)) st.sector = secs[0];
   const blks = [...new Set(w.filter(s => s.sector===st.sector).map(s => s.blk))].sort(srt);
   if (!blks.includes(st.blk)) st.blk = blks[0];
+  
+  // إجمالي البيانات للقطاع والبلوك المختارين
   const rows = w.filter(s => s.sector===st.sector && s.blk===st.blk);
   const g = {};
   rows.forEach(s => (g[s.bld] = g[s.bld] || []).push(s));
+  
+  // قائمة العمارات المتاحة للفتح (الغير مسددة)
+  const availableBlds = Object.keys(g).sort(srt);
+  
+  // العمارات المسددة (لإظهار رسالة الخطأ)
+  const allBlds = [...new Set(st.S.filter(s => s.sector === st.sector && s.blk === st.blk).map(s => s.bld))].sort(srt);
+  const paidBlds = allBlds.filter(b => !availableBlds.includes(b));
+
   const t = tot(rows);
   const opt = (a,v) => a.map(x => `<option ${x===v?'selected':''}>${x}</option>`).join('');
 
@@ -370,7 +380,7 @@ export async function renderHome(el){
       <label class="field"><span>البلوك</span><select id="sBlk">${opt(blks,st.blk)}</select></label>
       <label class="field"><span>العمارة</span>
         <select id="sBld">
-          ${Object.keys(g).sort((a,b)=> Number(a)-Number(b)).map(b => `<option value="${b}" ${st.open === b ? 'selected' : ''}>${b}</option>`).join('')}
+          ${availableBlds.map(b => `<option value="${b}" ${st.open === b ? 'selected' : ''}>${b}</option>`).join('')}
         </select>
       </label>
     </div>
@@ -387,10 +397,9 @@ export async function renderHome(el){
     const aa = g[st.open].sort((p,q) => srt(p.apt, q.apt));
     ov = {a: aa, v: aptsView(aa)};
     
-    const sortedBlds = Object.keys(g).sort((a,b) => Number(a)-Number(b));
-    const currentIdx = sortedBlds.indexOf(st.open);
-    const prevBld = currentIdx > 0 ? sortedBlds[currentIdx - 1] : null;
-    const nextBld = currentIdx < sortedBlds.length - 1 ? sortedBlds[currentIdx + 1] : null;
+    const currentIdx = availableBlds.indexOf(st.open);
+    const prevBld = currentIdx > 0 ? availableBlds[currentIdx - 1] : null;
+    const nextBld = currentIdx < availableBlds.length - 1 ? availableBlds[currentIdx + 1] : null;
 
     html += `
     </div>
@@ -427,14 +436,53 @@ export async function renderHome(el){
 
   el.innerHTML = html;
 
-  // دالة موحدة لفتح العمارة وتحديث كل العناصر
-  const openBuilding = (bldValue) => {
-    if (!bldValue) return;
-    st.open = bldValue;
-    st.bld = bldValue;
-    const yScroll = window.scrollY;
-    renderHome(el);
-    window.scrollTo(0, yScroll); // الحفاظ على مكان التمرير
+  // ✅ دالة مركزية للتحكم في فتح العمارة
+  const handleBuildingSelection = (targetValue) => {
+    if (!targetValue) return;
+    
+    let finalTarget = targetValue;
+    if (targetValue.length === 1) finalTarget = '0' + targetValue;
+
+    // 1. التحقق إذا كانت العمارة متاحة (غير مسددة)
+    if (availableBlds.includes(finalTarget)) {
+      // 2. مزامنة القائمة
+      const sBldEl = el.querySelector('#sBld');
+      if (sBldEl) {
+          for (let i = 0; i < sBldEl.options.length; i++) {
+              if (sBldEl.options[i].value === finalTarget) {
+                  sBldEl.selectedIndex = i;
+                  break;
+              }
+          }
+      }
+      // 3. مزامنة مربع النص
+      const bldInEl = el.querySelector('#bldIn');
+      if (bldInEl && bldInEl.value !== finalTarget) {
+          bldInEl.value = finalTarget;
+      }
+
+      // 4. فتح العمارة
+      st.open = finalTarget;
+      st.bld = finalTarget;
+      
+      // تجنب إعادة رسم الصفحة إذا كنا واقفين بالفعل على نفس العمارة
+      if (el.querySelector('#buildingView') && st.open === finalTarget) return; 
+      
+      const yScroll = window.scrollY;
+      renderHome(el);
+      window.scrollTo(0, yScroll);
+      
+    } else if (paidBlds.includes(finalTarget)) {
+      // إذا كانت العمارة مسددة
+      toast(`عمارة ${finalTarget} مسددة بالكامل.`);
+      const bldInEl = el.querySelector('#bldIn');
+      if (bldInEl) bldInEl.value = st.open || ''; // إعادة المربع للقيمة السابقة
+    } else {
+      // إذا لم تكن العمارة موجودة في الأساس
+      toast(`العمارة ${finalTarget} غير موجودة.`);
+      const bldInEl = el.querySelector('#bldIn');
+      if (bldInEl) bldInEl.value = st.open || ''; 
+    }
   };
 
   const searchPanel = el.querySelector('#searchPanel');
@@ -533,34 +581,25 @@ export async function renderHome(el){
     const sBldEl = el.querySelector('#sBld');
     const bldInEl = el.querySelector('#bldIn');
 
-    // ✅ الربط الشامل: القائمة ومربع النص
-    if (sBldEl && bldInEl) {
+    if (sBldEl) {
       sBldEl.addEventListener('change', function() {
-        bldInEl.value = this.value;
-        openBuilding(this.value);
+        handleBuildingSelection(this.value);
       });
+    }
 
+    if (bldInEl) {
       bldInEl.addEventListener('input', function() {
-        const typed = this.value;
-        let targetBld = typed;
-
-        if (typed.length === 1) {
-          targetBld = '0' + typed; // إضافة صفر للخانة الواحدة
+        if (this.value.length === 2) { // التفاعل فقط عند اكتمال رقمين
+           handleBuildingSelection(this.value);
         }
-
-        for (let i = 0; i < sBldEl.options.length; i++) {
-          if (sBldEl.options[i].value === targetBld) {
-            sBldEl.selectedIndex = i;
-            break;
-          }
-        }
-
-        if (targetBld.length >= 1 && targetBld !== '00') { 
-           // إذا كتب رقمين أو كتب رقم وتم إضافة الصفر له، افتح العمارة
-           if (targetBld.length === 2) {
-               openBuilding(targetBld);
-           }
-        }
+      });
+      
+      // دعم الضغط على Enter في المربع
+      bldInEl.addEventListener('keydown', function(e) {
+         if (e.key === 'Enter') {
+             handleBuildingSelection(this.value);
+             this.blur(); // إغلاق الكيبورد
+         }
       });
     }
 
@@ -569,19 +608,17 @@ export async function renderHome(el){
     el.querySelector('#modeList').onclick = () => { st.open = null; renderHome(el); };
     
     el.querySelectorAll('[data-b]').forEach(btn => {
-      btn.onclick = () => { st.sel.clear(); openBuilding(btn.dataset.b); };
+      btn.onclick = () => { st.sel.clear(); handleBuildingSelection(btn.dataset.b); };
     });
   } else {
-    // ✅ الربط الشامل: أزرار السابق والتالي
     el.querySelectorAll('[data-nav]').forEach(btn => {
       btn.onclick = () => {
         const dir = btn.dataset.nav;
-        const sortedBlds = Object.keys(g).sort((a,b) => Number(a) - Number(b));
-        const currentIdx = sortedBlds.indexOf(st.open);
+        const currentIdx = availableBlds.indexOf(st.open);
         let target = null;
-        if (dir === 'prev' && currentIdx > 0) target = sortedBlds[currentIdx - 1];
-        if (dir === 'next' && currentIdx < sortedBlds.length - 1) target = sortedBlds[currentIdx + 1];
-        if (target) openBuilding(target);
+        if (dir === 'prev' && currentIdx > 0) target = availableBlds[currentIdx - 1];
+        if (dir === 'next' && currentIdx < availableBlds.length - 1) target = availableBlds[currentIdx + 1];
+        if (target) handleBuildingSelection(target);
       };
     });
     const selectAllCb = el.querySelector('#selectAllApts');
