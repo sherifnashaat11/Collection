@@ -12,7 +12,7 @@ const num2Input = (id, nextId, placeholder = '') =>
   `<input id="${id}" class="num2" type="text" inputmode="numeric" maxlength="2" pattern="[0-9]*" placeholder="${placeholder}" ${nextId ? `data-next="${nextId}"` : ''}>`;
 
 export async function renderSearch(el, forceAll = false, fromHome = false){
-  document.getElementById('back').hidden = true;
+  
   await refresh();
   if (forceAll) {
     scope = 'all';
