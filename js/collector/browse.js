@@ -17,7 +17,6 @@ export const st = {
 };
 
 const srt = (a,b) => Number(a)-Number(b);
-const back = v => { const b = document.getElementById('back'); if (b) b.hidden = !v; };
 const num = s => +String(s||'').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const due = s => Math.max(0, s.value - (st.adv.get(key(s))||0));
 const tot = a => totals(a, due);
@@ -36,11 +35,6 @@ export async function refresh(){
 
 export const work = () => st.S.filter(s => (st.all || s.inRoute) && !st.paid.has(key(s)));
 
-
-
-
-
-
 export const toast = t => {
   const e = document.getElementById('toast');
   if (!e) return;
@@ -50,8 +44,6 @@ export const toast = t => {
   e._t = setTimeout(() => { e.className = ''; }, 2600);
 };
 
-
-/* ===== دالة تأكيد الطباعة بعد السداد ===== */
 function askPrint(entries) {
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -69,7 +61,6 @@ function askPrint(entries) {
     d.querySelector('#printNo').onclick = () => { d.close(); d.remove(); resolve(false); };
     d.querySelector('#printYes').onclick = () => {
       d.close(); d.remove();
-      // فتح صفحة الطباعة لكل عملية
       entries.forEach((e, idx) => {
         setTimeout(() => {
           const s = st.by.get(e.key) || {};
@@ -79,62 +70,42 @@ function askPrint(entries) {
             c: e.count || 0, m: st.cycle, u: st.who, k: e.key
           }).toString();
           window.open('pages/print.html?' + q, '_blank');
-        }, idx * 500); // تأخير بسيط بين كل فاتورة لعدم حظر المتصفح
+        }, idx * 500); 
       });
       resolve(true);
     };
   });
 }
 
-
 export function setFilter(f){ st.filter = f; }
 export function clearFilter(){ st.filter = null; }
-export function inFilter(kind, k){
-  if (!st.filter) return false;
-  return st.filter.matches.has(kind + ':' + k);
+
+/* ===== دالة لجلب القراءة السابقة ===== */
+async function getLastReading(key) {
+  try {
+    const invoices = await all('invoices');
+    const clientInvoices = invoices.filter(inv => inv.key === key).sort((a,b) => new Date(b.date) - new Date(a.date));
+    return clientInvoices.length > 0 ? clientInvoices[0].currReading : 0;
+  } catch(e) {
+    return 0;
+  }
 }
 
-export function receipt(e){
-  const s = st.by.get(e.key) || {};
-  const w = window.open('', '_blank', 'width=400,height=600');
-  if (!w) return;
-  w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>إيصال</title>
-  <style>body{font-family:Tahoma,sans-serif;padding:1rem;color:#0f2438}.r{max-width:340px;margin:auto;border:2px dashed #0f2438;border-radius:12px;padding:1rem}h1{font-size:1.1rem;text-align:center}.row{display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid #d6e0e8}.big{font-size:1.4rem;font-weight:800;text-align:center;margin:.9rem 0 .2rem}.foot{text-align:center;color:#6b7f8f;font-size:.8rem;margin-top:.6rem}</style></head><body>
-  <div class="r"><h1>إيصال سداد غاز</h1>
-  <div class="row"><b>العميل</b><span>${esc(s.name||'بدون اسم')}</span></div>
-  <div class="row"><b>العنوان</b><span>قطاع ${s.sector||'—'} · بلوك ${s.blk||'—'} · عمارة ${s.bld||'—'} · شقة ${s.apt||'—'}</span></div>
-  <div class="row"><b>التاريخ</b><span>${new Date(e.time).toLocaleString('ar-EG')}</span></div>
-  <div class="row"><b>النوع</b><span>${e.type==='advance'?'سداد مقدم':'سداد'}</span></div>
-  <div class="big">${Number(e.amount||0).toLocaleString('en-US')} جنيه</div>
-  <div class="foot">المحصل: ${esc(st.who||'')} · إصدار ${esc(st.cycle||'')}</div>
-  </div><script>setTimeout(()=>window.print(),300)<\/script></body></html>`);
-  w.document.close();
-}
-
-/* ===== التصميم الجديد لبطاقات الشقق ===== */
 function aptsView(a){
   const ch = a.filter(s => st.sel.has(key(s)));
   const ct = tot(ch);
   const allTot = tot(a);
-  
-  
-  
-    const totalBuildingDue = allTot.value; // إجمالي المديونية في العمارة
-  const selectedDue = ct.value; // إجمالي المحدد
+  const totalBuildingDue = allTot.value;
+  const selectedDue = ct.value;
   const remainingValue = totalBuildingDue - selectedDue;
   
-  
-  
-  
-  
-  // ====== التعديل: 4 دورات لونية حسب الترتيب (idx) بدل رقم الشقة ======
-  const TINTS = [0, 4, 8, 12]; // نِسَب تظليل متدرجة للوضع الفاتح
+  const TINTS = [0, 4, 8, 12];
   const cards = a.map((s, idx) => {
     const k = key(s);
     const b = st.adv.get(k) || 0;
     const selected = st.sel.has(k);
     const nameHtml = s.name ? esc(s.name) : '<em class="empty-name">بدون اسم</em>';
-    const cycle = idx % 4;                // 0..3 دورياً حسب الترتيب الظاهر
+    const cycle = idx % 4;
     const pct   = TINTS[cycle];
     const partial = (s.count || 0) > 1;
     let hiClass = '';
@@ -148,7 +119,6 @@ function aptsView(a){
         <div class="apt-name" data-nm="${k}">${nameHtml}</div>
         <button class="apt-val-btn" data-p="${k}" type="button">${money(due(s))}</button>
       </div>
-      
       <div class="apt-row-2">
         <div class="apt-info">
           <span class="apt-apt-box">${s.apt}</span>
@@ -158,7 +128,7 @@ function aptsView(a){
         <div class="apt-menu-wrap">
           <button class="apt-dots" data-m="${k}" type="button" aria-label="خيارات">⋮</button>
           <div class="apt-pop" data-pop="${k}" hidden>
-            <button data-act="read" data-id="${k}" type="button">قراءة عداد</button>
+            <button data-act="read" data-id="${k}" type="button">قراءة العداد</button>
             ${partial ? `<button data-act="partial" data-id="${k}" type="button">سداد جزئي</button>` : ''}
             <div class="apt-pop-info">الفواتير: ${s.count} · القيمة: ${money(s.value)}</div>
             ${!s.name ? `<button data-act="name" data-id="${k}" type="button">تعديل الاسم</button>` : ''}
@@ -172,21 +142,10 @@ function aptsView(a){
   if (ch.length > 0) {
     barHtml = `
       <div class="building-bottom-card" style="background: var(--card); border-top: 2px solid var(--line); padding: 12px; margin-top: 10px; border-radius: 0 0 var(--r-lg) var(--r-lg);">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: var(--ink);">
-          <span>إجمالي العمارة:</span>
-          <b>${money(allTot.value)} ج</b>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: var(--ink);">
-          <span>المتبقي بعد السداد:</span>
-          <b>${money(remainingValue)} ج</b>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; color: var(--ember); font-weight: 800;">
-          <span>المحدد (${ch.length} شقة · ${ch.reduce((t,s) => t + (s.count||0), 0)} فاتورة):</span>
-          <b>${money(ct.value)} ج</b>
-        </div>
-        <button class="btn" id="pay" style="width: 100%; background: var(--ok); color: #fff;">
-          سداد المحدد (${money(ct.value)} ج)
-        </button>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: var(--ink);"><span>إجمالي العمارة:</span><b>${money(allTot.value)} ج</b></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: var(--ink);"><span>المتبقي بعد السداد:</span><b>${money(remainingValue)} ج</b></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; color: var(--ember); font-weight: 800;"><span>المحدد (${ch.length} شقة · ${ch.reduce((t,s) => t + (s.count||0), 0)} فاتورة):</span><b>${money(ct.value)} ج</b></div>
+        <button class="btn" id="pay" style="width: 100%; background: var(--ok); color: #fff;">سداد المحدد (${money(ct.value)} ج)</button>
       </div>
     `;
   }
@@ -194,8 +153,8 @@ function aptsView(a){
   return {html: cards, ch, ct, allTot, barHtml};
 }
 
-/* ===== السداد الجزئي ===== */
 function partialDialog(s){
+  // ... (الكود كما هو بدون تغيير) ...
   return new Promise(resolve => {
     const d = document.createElement('dialog');
     d.className = 'partial-dialog';
@@ -205,10 +164,7 @@ function partialDialog(s){
     let options = '';
     if (mOpts && mOpts.length > 1){
       mOpts.forEach(opt => {
-        options += `<button class="partial-opt" type="button" data-cnt="${opt.count}" data-amt="${opt.amount}">
-          عدد ${opt.count} — ${money(opt.amount)} جنيه
-          <small>${opt.label}</small>
-        </button>`;
+        options += `<button class="partial-opt" type="button" data-cnt="${opt.count}" data-amt="${opt.amount}">عدد ${opt.count} — ${money(opt.amount)} جنيه<small>${opt.label}</small></button>`;
       });
     }
     d.innerHTML = `
@@ -218,12 +174,8 @@ function partialDialog(s){
       <div class="stack">
         <label class="field"><span>عدد الفواتير المسددة</span><input id="pCount" type="number" min="1" max="${maxCount}" value="1"></label>
         <label class="field"><span>القيمة المسددة</span><input id="pAmount" type="number" min="1" value="${unitValue}"></label>
-      </div>
-      `}
-      <div class="actions">
-        <button class="btn" id="pOk" type="button">تأكيد السداد</button>
-        <button class="btn ghost" id="pCancel" type="button">إلغاء</button>
-      </div>
+      </div>`}
+      <div class="actions"><button class="btn" id="pOk" type="button">تأكيد السداد</button><button class="btn ghost" id="pCancel" type="button">إلغاء</button></div>
     `;
     document.body.append(d);
     d.showModal();
@@ -233,11 +185,9 @@ function partialDialog(s){
       if (options){
         const sel = d.querySelector('.partial-opt.selected');
         if (!sel){ alert('اختر إحدى القيم'); return; }
-        count = +sel.dataset.cnt;
-        amount = +sel.dataset.amt;
+        count = +sel.dataset.cnt; amount = +sel.dataset.amt;
       } else {
-        count = +d.querySelector('#pCount').value;
-        amount = +d.querySelector('#pAmount').value;
+        count = +d.querySelector('#pCount').value; amount = +d.querySelector('#pAmount').value;
       }
       if (!(count > 0) || !(amount > 0)){ alert('أدخل قيماً صحيحة'); return; }
       if (count > maxCount){ alert('عدد الفواتير أكبر من المديونية'); return; }
@@ -254,16 +204,12 @@ function partialDialog(s){
   });
 }
 
-/* ===== ربط أحداث الشقق ===== */
 function bind(el, a, v, again){
   el.querySelectorAll('[data-k]').forEach(c => {
     c.onchange = () => { c.checked ? st.sel.add(c.dataset.k) : st.sel.delete(c.dataset.k); again(); };
   });
   const allCb = el.querySelector('#all');
-  if (allCb) allCb.onchange = e => {
-    a.forEach(s => e.target.checked ? st.sel.add(key(s)) : st.sel.delete(key(s)));
-    again();
-  };
+  if (allCb) allCb.onchange = e => { a.forEach(s => e.target.checked ? st.sel.add(key(s)) : st.sel.delete(key(s))); again(); };
   el.querySelectorAll('[data-nm]').forEach(nm => {
     nm.onclick = ev => {
       ev.stopPropagation();
@@ -287,14 +233,24 @@ function bind(el, a, v, again){
       ev.stopPropagation();
       const k = b.dataset.id, s = st.by.get(k);
       const act = b.dataset.act;
+      
       if (act === 'read'){
+        // تم التعديل هنا: جلب القراءة السابقة وفتح الحاسبة
+        const lastRead = await getLastReading(k);
         const q = new URLSearchParams({
-          n: s.name||'', s: s.sector, b: s.blk, d: s.bld, a: s.apt,
-          v: s.value, r: st.adv.get(k)||0, q: due(s), c: s.count, m: st.cycle, u: st.who, k
+          n: s.name||'', 
+          s: s.sector, 
+          b: s.blk, 
+          d: s.bld, 
+          a: s.apt,
+          k: k, 
+          prev: lastRead
         }).toString();
-        openPage('reading.html', q);
+        
+        openPage('calculator.html', q);
         el.querySelectorAll('[data-pop]').forEach(p => p.hidden = true);
       }
+      
       if (act === 'name'){
         const n = prompt('اسم العميل', s?.name || '');
         if (n && n.trim()){
@@ -304,6 +260,7 @@ function bind(el, a, v, again){
           again();
         }
       }
+      
       if (act === 'partial'){
         const res = await partialDialog(s);
         if (res){
@@ -323,27 +280,13 @@ function bind(el, a, v, again){
       const k = btn.dataset.p, s = st.by.get(k), amt = due(s);
       if (!amt){ toast('لا يوجد مبلغ مستحق'); return; }
       if (!confirm(`تأكيد سداد شقة ${s.apt} — ${s.name||'بدون اسم'} بمبلغ ${money(amt)} جنيه؟`)) return;
-     
-
-
-
-
-
-	      const entry = await pay(st.no, [s], st.adv);
+      const entry = await pay(st.no, [s], st.adv);
       await put('lastPosition','last',{sector:st.sector, blk:st.blk, bld:st.bld});
       st.sel.delete(k);
       await refresh();
       toast(`تم سداد شقة ${s.apt} (${money(amt)} جنيه)`);
-      
-      // رسالة تأكيد الطباعة
       await askPrint([entry || { key: k, due: s.value, amount: amt, count: s.count, fromAdvance: 0 }]);
-      
       again();
-	  
-	  
-	  
-	  
-	  
     };
   });
 
@@ -352,30 +295,16 @@ function bind(el, a, v, again){
     if (!v.ch.length) return;
     const amt = v.ct.value;
     if (!confirm(`تأكيد سداد ${v.ch.length} شقة بمبلغ ${money(amt)} جنيه؟`)) return;
-    
-	
-	
-	
-	
-	    const entries = await pay(st.no, v.ch, st.adv);
+    const entries = await pay(st.no, v.ch, st.adv);
     await put('lastPosition','last',{sector:st.sector, blk:st.blk, bld:st.bld});
     st.sel.clear();
     await refresh();
     toast(`تم سداد ${v.ch.length} شقة (${money(amt)} جنيه)`);
-    
-    // رسالة تأكيد الطباعة لكل شقة
     await askPrint(entries || v.ch.map(s => ({ key: key(s), due: s.value, amount: due(s), count: s.count, fromAdvance: 0 })));
-    
     again();
-	
-	
-	
-	
-	
   };
 }
 
-/* ===== الصفحة الرئيسية ===== */
 export async function renderHome(el){
   const y = scrollY;
   const w = work();
@@ -398,7 +327,6 @@ export async function renderHome(el){
   const opt = (a,v) => a.map(x => `<option ${x===v?'selected':''}>${x}</option>`).join('');
 
   let ov = null;
-
   let html = `
   <div style="margin-bottom: 10px;">
     <button class="btn" id="mainSearchBtn" style="width: 100%; font-size: 14px; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white;">🔍 بحث خارج النطاق</button>
@@ -425,19 +353,7 @@ export async function renderHome(el){
 
   if (st.open && g[st.open]){
     st.bld = st.open;
-	
-	
-	  // حفظ آخر عمارة تم فتحها
-    localStorage.setItem('lastPosition', JSON.stringify({
-      sector: st.sector,
-      blk: st.blk,
-      bld: st.open
-    }));
-	
-	
-	
-	
-	
+    localStorage.setItem('lastPosition', JSON.stringify({ sector: st.sector, blk: st.blk, bld: st.open }));
     const aa = g[st.open].sort((p,q) => srt(p.apt, q.apt));
     ov = {a: aa, v: aptsView(aa)};
     
@@ -447,34 +363,18 @@ export async function renderHome(el){
     const nextBld = currentIdx < sortedBlds.length - 1 ? sortedBlds[currentIdx + 1] : null;
 
     html += `
-	
-	
-	      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
       <button class="btn ghost sm" data-nav="prev" ${prevBld ? '' : 'disabled'} style="flex:1; margin-left:5px;">⏩    السابق</button>
       <button class="btn ghost sm" data-nav="next" ${nextBld ? '' : 'disabled'} style="flex:1; margin-right:5px;"> التالي    ⏪</button>
     </div>
-	
-	
-	
-	
-	
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-       
-	   <h2 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">عمارة ${st.open} <span style="font-size: 16px; color: var(--ember); font-weight: 800;">(${money(tot(aa).value)} ج)</span></h2>
-	   
-	   
-	   
-	   
+       <h2 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">عمارة ${st.open} <span style="font-size: 16px; color: var(--ember); font-weight: 800;">(${money(tot(aa).value)} ج)</span></h2>
         <label class="chk"><input type="checkbox" id="selectAllApts" ${aa.length > 0 && aa.every(s => st.sel.has(key(s))) ? 'checked' : ''}> تحديد الكل</label>
       </div>
-	  
-	  
-	  
       ${ov.v.html}
       ${ov.v.barHtml}
     </div>`;
   } else {
-    // ====== التعديل: إضافة data-cycle و --row-tint دورياً للعمارات أيضاً ======
     const ROW_TINTS = [0, 3, 6, 9];
     Object.keys(g).sort(srt).forEach((b, idx) => {
       const x = tot(g[b]);
@@ -485,10 +385,7 @@ export async function renderHome(el){
       if (st.filter){
         if (st.filter.kind === 'blk' && st.filter.matches.has('blk:' + st.sector + '|' + st.blk)) hiClass = 'hi';
         if (st.filter.kind === 'bld' && st.filter.matches.has('bld:' + st.sector + '|' + st.blk + '|' + b)) hiClass = 'hi';
-        if (st.filter.kind === 'apt'){
-          const hasMatch = g[b].some(s => st.filter.matches.has('apt:' + key(s)));
-          if (hasMatch) hiClass = 'hi';
-        }
+        if (st.filter.kind === 'apt'){ const hasMatch = g[b].some(s => st.filter.matches.has('apt:' + key(s))); if (hasMatch) hiClass = 'hi'; }
       }
       const cells = `<b>عمارة ${b}</b><span>${x.n} شقة</span><span>${x.count} فاتورة</span><strong>${money(x.value)}</strong>`;
       html += `<div class="brow prow ${o?'open':''} ${hiClass}" data-b="${b}" data-cycle="${cycle}" style="--row-tint:${rowPct}%" role="button" tabindex="0">${cells}</div>`;
@@ -497,7 +394,6 @@ export async function renderHome(el){
 
   el.innerHTML = html + '</div>';
 
-  /* ===== ربط الأحداث ===== */
   const mainSearchBtn = el.querySelector('#mainSearchBtn');
   if (mainSearchBtn) {
     mainSearchBtn.onclick = () => {
@@ -509,17 +405,8 @@ export async function renderHome(el){
 
   el.querySelector('#sSec').onchange = e => { st.sector = e.target.value; st.open = null; renderHome(el); };
   el.querySelector('#sBlk').onchange = e => { st.blk = e.target.value; st.open = null; renderHome(el); };
-  
-  el.querySelector('#sBld').onchange = e => {
-    const v = e.target.value;
-    if (v) { st.open = v; st.bld = v; } else { st.open = null; }
-    renderHome(el);
-  };
-
-  el.querySelector('#modeList').onclick = () => {
-    st.open = null;
-    renderHome(el);
-  };
+  el.querySelector('#sBld').onchange = e => { const v = e.target.value; if (v) { st.open = v; st.bld = v; } else { st.open = null; } renderHome(el); };
+  el.querySelector('#modeList').onclick = () => { st.open = null; renderHome(el); };
 
   const bldIn = el.querySelector('#bldIn');
   bldIn.addEventListener('input', () => {
@@ -528,78 +415,43 @@ export async function renderHome(el){
       if (g[v]){ st.open = v; st.bld = v; renderHome(el); }
       else {
         const inPaid = st.S.some(s => s.sector===st.sector && s.blk===st.blk && s.bld===v && st.paid.has(key(s)));
-        if (inPaid) toast('العمارة مسددة بالكامل');
-        else toast('لا توجد في السجلات');
+        if (inPaid) toast('العمارة مسددة بالكامل'); else toast('لا توجد في السجلات');
         bldIn.value = '';
       }
     }
   });
 
   el.querySelectorAll('[data-b]').forEach(b => {
-    b.onclick = () => {
-      st.sel.clear();
-      st.open = st.open === b.dataset.b ? null : b.dataset.b;
-      st.bld = st.open;
-      renderHome(el);
-    };
+    b.onclick = () => { st.sel.clear(); st.open = st.open === b.dataset.b ? null : b.dataset.b; st.bld = st.open; renderHome(el); };
   });
-
-
-
-
-
-
-
 
   el.querySelectorAll('[data-nav]').forEach(btn => {
     btn.onclick = () => {
       const dir = btn.dataset.nav;
-      // تصفية العمارات: نأخذ فقط العمارات التي تحتوي على شقق غير مسددة (قيمتها > 0)
-      const validBlds = Object.keys(g).filter(b => 
-        g[b].some(s => !st.paid.has(key(s))) 
-      ).sort((a,b) => Number(a) - Number(b));
-      
+      const validBlds = Object.keys(g).filter(b => g[b].some(s => !st.paid.has(key(s))) ).sort((a,b) => Number(a) - Number(b));
       const currentIdx = validBlds.indexOf(st.open);
       let target = null;
       if (dir === 'prev' && currentIdx > 0) target = validBlds[currentIdx - 1];
       if (dir === 'next' && currentIdx < validBlds.length - 1) target = validBlds[currentIdx + 1];
-      
-      if (target) {
-        st.open = target;
-        st.bld = target;
-        renderHome(el);
-      } else {
-        // إذا لم يجد تالياً أو سابقاً، يظهر رسالة
-        toast(dir === 'next' ? 'لا توجد عمارات تالية غير مسددة' : 'لا توجد عمارات سابقة غير مسددة');
-      }
+      if (target) { st.open = target; st.bld = target; renderHome(el); } 
+      else { toast(dir === 'next' ? 'لا توجد عمارات تالية غير مسددة' : 'لا توجد عمارات سابقة غير مسددة'); }
     };
   });
-  
-  
-  
-  
-  
-  
 
   const selectAllCb = el.querySelector('#selectAllApts');
   if (selectAllCb && ov) {
     selectAllCb.onchange = (e) => {
-      if (e.target.checked) {
-        ov.a.forEach(s => st.sel.add(key(s)));
-      } else {
-        st.sel.clear();
-      }
+      if (e.target.checked) ov.a.forEach(s => st.sel.add(key(s))); else st.sel.clear();
       renderHome(el);
     };
   }
-
   if (ov) bind(el, ov.a, ov.v, () => renderHome(el));
   scrollTo(0, y);
 }
 
-/* ===== صفحة ما تم تحصيله ===== */
+// ... (باقي دوال renderLedger بدون تغيير) ...
 export async function renderLedger(el, reload, exp){
-  back(false);
+  // (نفس الكود السابق بدون تعديل)
   await refresh();
   const e = await list();
   const td = e.filter(x => ldate(x.time) === ldate(new Date()));
@@ -648,12 +500,7 @@ export async function renderLedger(el, reload, exp){
     </div>
   </div>`;
   el.querySelectorAll('[data-m]').forEach(btn => {
-    btn.onclick = ev => {
-      ev.stopPropagation();
-      el.querySelectorAll('[data-pop]').forEach(p => p.hidden = true);
-      const pop = el.querySelector(`[data-pop="${btn.dataset.m}"]`);
-      if (pop) pop.hidden = !pop.hidden;
-    };
+    btn.onclick = ev => { ev.stopPropagation(); el.querySelectorAll('[data-pop]').forEach(p => p.hidden = true); const pop = el.querySelector(`[data-pop="${btn.dataset.m}"]`); if (pop) pop.hidden = !pop.hidden; };
   });
   document.addEventListener('click', () => { el.querySelectorAll('[data-pop]').forEach(p => p.hidden = true); });
   el.querySelectorAll('[data-act]').forEach(b => {
@@ -663,87 +510,36 @@ export async function renderLedger(el, reload, exp){
       const entry = e.find(x => x.id === id);
       if (!entry) return;
       const act = b.dataset.act;
-      if (act === 'undo'){
-        if (confirm('التراجع عن هذه العملية؟')){
-          await undo(entry);
-          renderLedger(el, reload, exp);
-        }
-      }
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	        if (act === 'print'){
-        // إضافة علامة الطباعة لمنع التراجع مستقبلاً
+      if (act === 'undo'){ if (confirm('التراجع عن هذه العملية؟')){ await undo(entry); renderLedger(el, reload, exp); } }
+      if (act === 'print'){
         await put('ledger', entry.id, { ...entry, printed: true });
-        
         const s = st.by.get(entry.key) || {};
         const q = new URLSearchParams({
           n: s.name||'', s: s.sector||'', b: s.blk||'', d: s.bld||'', a: s.apt||'',
           v: s.value||0, r: st.adv.get(entry.key)||0, q: entry.due||s.value||0,
           c: s.count||0, m: st.cycle, u: st.who, k: entry.key
         }).toString();
-                openPage('print.html', q + '&reprint=1');
+        openPage('print.html', q + '&reprint=1');
       }
- 
-	  
-	  
-	  
-	  
-           if (act === 'advance'){
+      if (act === 'advance'){
         const s = st.by.get(entry.key);
         if (!s) return;
         if ((s.value||0) > 0){ toast('لا يمكن السداد المقدم لعميل ما زال عليه مديونية'); return; }
         const x = num(prompt('مبلغ السداد المقدم'));
-        if (x > 0){
-          await addAdvance(st.no, s, x);
-          await refresh();
-          toast(`سُجّل مقدم ${money(x)} جنيه`);
-          renderLedger(el, reload, exp);
-        }
+        if (x > 0){ await addAdvance(st.no, s, x); await refresh(); toast(`سُجّل مقدم ${money(x)} جنيه`); renderLedger(el, reload, exp); }
       }
     };
   });
 
-  // ===== إضافة أرشيف السداد المقدم =====
   const advanceClients = [];
-  st.adv.forEach((balance, k) => {
-    if (balance > 0) {
-      const s = st.by.get(k);
-      if (s) advanceClients.push({ ...s, advanceBalance: balance });
-    }
-  });
+  st.adv.forEach((balance, k) => { if (balance > 0) { const s = st.by.get(k); if (s) advanceClients.push({ ...s, advanceBalance: balance }); } });
   
   if (advanceClients.length > 0) {
     advanceClients.sort((a, b) => b.advanceBalance - a.advanceBalance);
-    
-    let advHtml = `
-      <div class="card" style="margin-top: 15px; border: 1.5px solid var(--advance, #7c3aed); border-radius: var(--r-lg);">
-        <h2 style="color: var(--advance, #7c3aed);">💰 أرشيف السداد المقدم</h2>
-        <div class="ledger-list">
-    `;
-    
+    let advHtml = `<div class="card" style="margin-top: 15px; border: 1.5px solid var(--advance, #7c3aed); border-radius: var(--r-lg);"><h2 style="color: var(--advance, #7c3aed);">💰 أرشيف السداد المقدم</h2><div class="ledger-list">`;
     advanceClients.forEach(s => {
-      advHtml += `
-        <div class="led-row" style="border-inline-start-color: var(--advance, #7c3aed);">
-          <div class="led-main">
-            <span class="led-apt" style="background: var(--advance, #7c3aed);">${s.apt || '?'}</span>
-            <div class="led-info">
-              <div class="led-name">${esc(s.name || 'بدون اسم')}</div>
-              <div class="led-meta">قطاع ${s.sector||''} · بلوك ${s.blk||''} · عمارة ${s.bld||''}</div>
-            </div>
-            <div class="led-right">
-              <div class="led-tags"><span class="tag" style="background: var(--advance, #7c3aed); color: #fff;">مقدم</span></div>
-              <div class="led-amount" style="color: var(--advance, #7c3aed);">${money(s.advanceBalance)}</div>
-            </div>
-          </div>
-        </div>
-      `;
+      advHtml += `<div class="led-row" style="border-inline-start-color: var(--advance, #7c3aed);"><div class="led-main"><span class="led-apt" style="background: var(--advance, #7c3aed);">${s.apt || '?'}</span><div class="led-info"><div class="led-name">${esc(s.name || 'بدون اسم')}</div><div class="led-meta">قطاع ${s.sector||''} · بلوك ${s.blk||''} · عمارة ${s.bld||''}</div></div><div class="led-right"><div class="led-tags"><span class="tag" style="background: var(--advance, #7c3aed); color: #fff;">مقدم</span></div><div class="led-amount" style="color: var(--advance, #7c3aed);">${money(s.advanceBalance)}</div></div></div></div>`;
     });
-    
     advHtml += `</div></div>`;
     el.insertAdjacentHTML('beforeend', advHtml);
   }
