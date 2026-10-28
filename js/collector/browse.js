@@ -377,7 +377,7 @@ function bind(el, a, v, again){
 
 /* ===== الصفحة الرئيسية ===== */
 export async function renderHome(el){
-  const y = scrollY; back(false);
+  const y = scrollY;
   const w = work();
   if (!st.S.length){
     el.innerHTML = '<div class="empty">لا توجد بيانات بعد. اضغط «تحديث الملف» من تبويب «ما تم تحصيله».</div>';
@@ -408,7 +408,7 @@ export async function renderHome(el){
     <label class="field"><span>البلوك</span><select id="sBlk">${opt(blks,st.blk)}</select></label>
     <label class="field"><span>العمارة</span>
       <select id="sBld">
-        <option value="">— اختر —</option>
+        <option value="" disabled selected hidden>اختر عمارة</option>
         ${Object.keys(g).sort((a,b)=> Number(a)-Number(b)).map(b => `<option value="${b}" ${st.open === b ? 'selected' : ''}>${b}</option>`).join('')}
       </select>
     </label>
