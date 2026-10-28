@@ -4,28 +4,61 @@
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f766e">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="حاسبة الغاز">
+<meta name="theme-color" content="#7c3aed">
 <title id="appTitle">حاسبة فاتورة الغاز</title>
 <style>
+/* ============================================================
+   تنسيقات أساسية ومتغيرات الألوان (تتطابق مع التطبيق الأساسي)
+============================================================ */
+:root{
+  --primary: #7c3aed;
+  --primary-soft: #ede9fe;
+  --ember: #d97706;
+  --ember-soft: #fef3c7;
+  --bg: #f4f7fa;
+  --card: #ffffff;
+  --ink: #0f2438;
+  --mute: #6b7f8f;
+  --line: #d6e0e8;
+  --danger: #d63a3a;
+  --success: #0d9668;
+}
+@media(prefers-color-scheme:dark), body[data-theme="dark"]{
+  :root{
+    --bg: #0a1722;
+    --card: #1a2f42;
+    --ink: #e7eff5;
+    --mute: #8da4b4;
+    --line: #2a4257;
+    --primary: #a78bfa;
+    --primary-soft: #2e1065;
+    --ember: #f5b53a;
+    --ember-soft: #451a03;
+  }
+}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{
   font-family:-apple-system,'Segoe UI',Tahoma,Roboto,sans-serif;
-  background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);
-  color:#0f172a;padding-bottom:30px;min-height:100vh;
+  background:var(--bg);
+  color:var(--ink);padding-bottom:30px;min-height:100vh;
   -webkit-font-smoothing:antialiased;
+  transition: background 0.3s, color 0.3s;
 }
+
+/* ============================================================
+   الهيدر
+============================================================ */
 header{
-  background:linear-gradient(135deg,#0f766e 0%,#14b8a6 60%,#2dd4bf 100%);
+  background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
   color:#fff;padding:22px 16px 26px;text-align:center;
-  box-shadow:0 6px 20px rgba(15,118,110,.25);
+  box-shadow:0 6px 20px rgba(0,0,0,.15);
   position:sticky;top:0;z-index:10;border-radius:0 0 24px 24px;
 }
 header::after{
   content:'';position:absolute;bottom:0;left:0;right:0;height:4px;
-  background:linear-gradient(90deg,#fbbf24,#f59e0b,#fbbf24);
+  background:linear-gradient(90deg,var(--ember),#fbbf24,var(--ember));
   border-radius:0 0 24px 24px;
 }
 header h1{margin:0;font-size:20px;font-weight:800;text-shadow:0 2px 4px rgba(0,0,0,.15)}
@@ -35,26 +68,25 @@ header .updated{
   padding:5px 14px;border-radius:20px;font-size:11.5px;font-weight:600;
   border:1px solid rgba(255,255,255,.3);
 }
+
+/* ============================================================
+   الحاويات والبطاقات
+============================================================ */
 .card{
-  background:#fff;margin:12px;border-radius:20px;padding:20px;
-  box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #e2e8f0;
+  background:var(--card);margin:12px;border-radius:20px;padding:20px;
+  box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid var(--line);
 }
-label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;color:#334155}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;color:var(--ink)}
 input{
-  width:100%;padding:14px;border:1.5px solid #cbd5e1;border-radius:12px;
-  font-size:17px;background:#f8fafc;margin-bottom:16px;font-family:inherit;
-  font-weight:600;color:#0f172a;transition:all .2s;
+  width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;
+  font-size:17px;background:var(--bg);margin-bottom:16px;font-family:inherit;
+  font-weight:600;color:var(--ink);transition:all .2s;
 }
-input:focus{outline:none;border-color:#14b8a6;background:#fff;box-shadow:0 0 0 4px rgba(20,184,166,.12)}
+input:focus{outline:none;border-color:var(--primary);background:var(--card);box-shadow:0 0 0 4px var(--primary-soft)}
 input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button{
-  -webkit-appearance:none;
-  margin:0;
-}
-input[type=number]{
-  -moz-appearance:textfield;
-  appearance:textfield;
-}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;appearance:textfield;}
+
 button{
   width:100%;padding:16px;border:none;border-radius:14px;
   font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;transition:.15s;
@@ -63,173 +95,68 @@ button:active{transform:scale(.97)}
 .hidden{display:none!important}
 
 /* ============================================================
-   Input Mode Selector
+   اختيار طريقة الإدخال
 ============================================================ */
 .mode-heading{
-  font-size:14px;
-  font-weight:800;
-  color:#0f766e;
-  margin:0 auto 14px auto;
-  padding:12px 14px;
-  background:linear-gradient(135deg,#ccfbf1,#f0fdfa);
-  border:1.5px solid #5eead4;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  line-height:1.5;
-  text-align:center;
-  max-width:340px;
+  font-size:14px;font-weight:800;color:var(--primary);
+  margin:0 auto 14px auto;padding:12px 14px;
+  background:var(--primary-soft);border:1.5px solid var(--primary);
+  border-radius:12px;display:flex;align-items:center;justify-content:center;
+  gap:8px;line-height:1.5;text-align:center;max-width:340px;
 }
-.mode-heading::before{
-  content:'👇';
-  font-size:18px;
-  flex-shrink:0;
-}
-.mode-selector{
-  display:flex;
-  flex-direction:row;
-  align-items:stretch;
-  justify-content:center;
-  gap:12px;
-  margin-bottom:18px;
-  flex-wrap:nowrap;
-}
+.mode-heading::before{content:'👇';font-size:18px;flex-shrink:0;}
+.mode-selector{display:flex;flex-direction:row;align-items:stretch;justify-content:center;gap:12px;margin-bottom:18px;flex-wrap:nowrap;}
 .mode-btn{
-  flex:1 1 0;
-  max-width:240px;
-  padding:14px 12px;
-  border:2px solid #cbd5e1;
-  border-radius:14px;
-  font-size:13.5px;
-  font-weight:800;
-  font-family:inherit;
-  cursor:pointer;
-  background:#fff;
-  color:#475569;
-  transition:all .25s;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  gap:6px;
-  line-height:1.4;
-  min-height:60px;
+  flex:1 1 0;max-width:240px;padding:14px 12px;border:2px solid var(--line);
+  border-radius:14px;font-size:13.5px;font-weight:800;font-family:inherit;
+  cursor:pointer;background:var(--card);color:var(--mute);transition:all .25s;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  gap:6px;line-height:1.4;min-height:60px;
 }
-.mode-btn:hover{
-  border-color:#14b8a6;
-  background:#f0fdfa;
-}
+.mode-btn:hover{border-color:var(--primary);background:var(--primary-soft);}
 .mode-btn.active{
-  background:linear-gradient(135deg,#0f766e,#14b8a6);
-  color:#fff;
-  border-color:#0f766e;
-  box-shadow:0 4px 14px rgba(15,118,110,0.35);
-  transform:translateY(-1px);
+  background:var(--primary);color:#fff;border-color:var(--primary);
+  box-shadow:0 4px 14px rgba(124, 58, 237, 0.35);transform:translateY(-1px);
 }
-.mode-btn:active{transform:scale(.97)}
-
 .input-box-container{
-  margin-top:14px;
-  padding:16px;
-  background:linear-gradient(135deg,#f8fafc,#f1f5f9);
-  border-radius:14px;
-  border:1.5px solid #e2e8f0;
-  animation:slideDown .3s ease-out;
+  margin-top:14px;padding:16px;background:var(--bg);
+  border-radius:14px;border:1.5px solid var(--line);animation:slideDown .3s ease-out;
 }
-@keyframes slideDown{
-  from{opacity:0;transform:translateY(-10px);}
-  to{opacity:1;transform:translateY(0);}
-}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
 
 .consumption-result{
-  background:linear-gradient(135deg,#ccfbf1,#99f6e4);
-  border:1.5px solid #5eead4;
-  border-radius:12px;
-  padding:14px;
-  margin-top:8px;
-  text-align:center;
-  color:#0f766e;
-  font-weight:800;
-  font-size:15px;
+  background:var(--primary-soft);border:1.5px solid var(--primary);
+  border-radius:12px;padding:14px;margin-top:8px;text-align:center;
+  color:var(--primary);font-weight:800;font-size:15px;
 }
-.consumption-result .value{
-  font-size:22px;
-  font-weight:800;
-  direction:ltr;
-  display:inline-block;
-  margin-inline-start:6px;
-}
+.consumption-result .value{font-size:22px;font-weight:800;direction:ltr;display:inline-block;margin-inline-start:6px;}
 
-/* زر حساب الفاتورة */
+/* ============================================================
+   الأزرار الرئيسية
+============================================================ */
 #calcBtn{
-  width:calc(100% - 24px);
-  margin:14px 12px;
-  padding:18px;
-  font-size:17px;
-  font-weight:800;
-  background:linear-gradient(135deg,#0f766e 0%,#14b8a6 50%,#2dd4bf 100%);
-  color:#fff;
-  border:none;
-  border-radius:16px;
-  cursor:pointer;
-  box-shadow:0 6px 20px rgba(15,118,110,.35);
-  transition:.15s;
-  font-family:inherit;
+  width:calc(100% - 24px);margin:14px 12px;padding:18px;font-size:17px;font-weight:800;
+  background:var(--primary);color:#fff;border:none;border-radius:16px;cursor:pointer;
+  box-shadow:0 6px 20px rgba(124, 58, 237, 0.35);transition:.15s;
 }
 #calcBtn:active{transform:scale(.97)}
 
-/* زر الأسعار المطبقة حالياً */
+#archiveBtn{
+  width:calc(100% - 24px);margin:0 12px 14px;padding:18px;font-size:17px;font-weight:800;
+  background:var(--success);color:#fff;border:none;border-radius:16px;cursor:pointer;
+  box-shadow:0 6px 20px rgba(13, 150, 104, 0.35);transition:.15s;
+}
+#archiveBtn:active{transform:scale(.97)}
+
 #currentPricesBtn{
-  width:calc(100% - 24px);
-  margin:0 12px 14px;
-  padding:16px;
-  font-size:15px;
-  font-weight:800;
-  background:linear-gradient(135deg,#0ea5e9,#0284c7);
-  color:#fff;
-  border:none;
-  border-radius:16px;
-  cursor:pointer;
-  box-shadow:0 4px 16px rgba(14,165,233,.3);
-  transition:.15s;
-  font-family:inherit;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-}
-#currentPricesBtn:active{transform:scale(.97)}
-
-@media (max-width:600px){
-  .mode-selector{gap:8px;}
-  .mode-btn{font-size:12px;padding:10px 8px;min-height:56px;}
+  width:calc(100% - 24px);margin:0 12px 14px;padding:16px;font-size:15px;font-weight:800;
+  background:var(--ember);color:#fff;border:none;border-radius:16px;cursor:pointer;
+  box-shadow:0 4px 16px rgba(217, 119, 6, 0.3);transition:.15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
 }
 
 /* ============================================================
-   Developer Badge - في أسفل الصفحة
-============================================================ */
-.developer-badge-container{
-  display:flex;
-  justify-content:center;
-  margin:24px 12px 14px;
-}
-.developer-badge{
-  background:linear-gradient(135deg,#f0fdf4 0%,#ccfbf1 100%);
-  border:1.5px solid #5eead4;border-radius:18px;padding:16px;
-  text-align:center;box-shadow:0 4px 14px rgba(15,118,110,.08);
-  position:relative;overflow:hidden;
-  max-width:520px;
-  width:100%;
-}
-.developer-badge::before{content:'👨‍💻';position:absolute;top:-12px;left:-12px;font-size:60px;opacity:.06}
-.developer-badge .dev-title{font-size:12px;color:#0f766e;font-weight:700;margin-bottom:5px;text-transform:uppercase}
-.developer-badge .dev-name{font-size:15px;color:#134e4a;font-weight:800;margin-bottom:8px}
-.developer-badge .dev-desc{font-size:12px;color:#334155;line-height:1.7}
-
-/* ============================================================
-   Modals
+   النوافذ المنبثقة (Modals)
 ============================================================ */
 .modal-overlay{
   position:fixed;inset:0;background:rgba(15,23,42,.7);
@@ -237,137 +164,55 @@ button:active{transform:scale(.97)}
   z-index:100;padding:20px;backdrop-filter:blur(6px);
 }
 .modal{
-  background:#fff;border-radius:26px;width:100%;max-width:480px;
+  background:var(--card);border-radius:26px;width:100%;max-width:480px;
   overflow:hidden;box-shadow:0 25px 60px -12px rgba(0,0,0,0.4);
-  animation:pop .3s cubic-bezier(0.16,1,0.3,1);
-  max-height:90vh;display:flex;flex-direction:column;
+  animation:pop .3s cubic-bezier(0.16,1,0.3,1);max-height:90vh;display:flex;flex-direction:column;
 }
 @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
 .modal-header{
-  background:linear-gradient(135deg,#0f766e 0%,#14b8a6 60%,#2dd4bf 100%);
+  background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
   color:#fff;padding:24px 22px;text-align:center;position:relative;
 }
 .modal-header::after{
   content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,#fbbf24,#f59e0b,#fbbf24);
+  background:linear-gradient(90deg,var(--ember),#fbbf24,var(--ember));
 }
-.modal-header .bill-title{
-  font-size:13px;font-weight:700;background:rgba(255,255,255,0.22);
-  padding:5px 14px;border-radius:12px;display:inline-block;margin-bottom:10px;
-  border:1px solid rgba(255,255,255,.25);
-}
+.modal-header .bill-title{font-size:13px;font-weight:700;background:rgba(255,255,255,0.22);padding:5px 14px;border-radius:12px;display:inline-block;margin-bottom:10px;border:1px solid rgba(255,255,255,.25);}
 .modal-header .label{font-size:12.5px;opacity:.92;margin-bottom:4px;font-weight:600}
-.modal-header .total{
-  font-size:46px;font-weight:800;letter-spacing:-1.5px;line-height:1;margin:8px 0;
-  direction:ltr;unicode-bidi:embed;text-shadow:0 3px 8px rgba(0,0,0,.15);
-}
-.modal-header .total-words{
-  font-size:12.5px;font-weight:700;background:rgba(255,255,255,0.22);
-  padding:9px 15px;border-radius:12px;display:inline-block;margin-top:12px;
-  max-width:100%;word-break:break-word;line-height:1.7;
-  border:1px solid rgba(255,255,255,.25);white-space:pre-line;
-}
-.modal-body{padding:18px 20px;overflow-y:auto;flex:1;display:none;background:#f8fafc}
+.modal-header .total{font-size:46px;font-weight:800;letter-spacing:-1.5px;line-height:1;margin:8px 0;direction:ltr;unicode-bidi:embed;text-shadow:0 3px 8px rgba(0,0,0,.15);}
+.modal-header .total-words{font-size:12.5px;font-weight:700;background:rgba(255,255,255,0.22);padding:9px 15px;border-radius:12px;display:inline-block;margin-top:12px;max-width:100%;word-break:break-word;line-height:1.7;border:1px solid rgba(255,255,255,.25);white-space:pre-line;}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1;display:none;background:var(--bg)}
 .modal-body.show{display:block}
 
 /* ============================================================
-   Summary Box - ملخص المدخلات
+   تفاصيل الفاتورة
 ============================================================ */
-.summary-box{
-  background:linear-gradient(135deg,#ccfbf1,#f0fdfa);
-  padding:14px;
-  border-radius:14px;
-  margin-bottom:16px;
-  border:1.5px solid #5eead4;
-}
-.summary-box .sb-title{
-  font-weight:800;
-  color:#0f766e;
-  font-size:13px;
-  margin-bottom:10px;
-  text-align:center;
-}
-.summary-box .sb-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:7px 10px;
-  background:#fff;
-  border-radius:8px;
-  margin-bottom:6px;
-  border:1px solid #e2e8f0;
-  font-size:13px;
-}
-.summary-box .sb-row:last-child{margin-bottom:0}
-.summary-box .sb-row .sb-label{color:#334155;font-weight:700}
-.summary-box .sb-row .sb-value{color:#0f766e;font-weight:800;direction:ltr}
+.summary-box{background:var(--primary-soft);padding:14px;border-radius:14px;margin-bottom:16px;border:1.5px solid var(--primary);}
+.summary-box .sb-title{font-weight:800;color:var(--primary);font-size:13px;margin-bottom:10px;text-align:center;}
+.summary-box .sb-row{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--card);border-radius:8px;margin-bottom:6px;border:1px solid var(--line);font-size:13px;}
+.summary-box .sb-row .sb-label{color:var(--ink);font-weight:700}
+.summary-box .sb-row .sb-value{color:var(--primary);font-weight:800;direction:ltr}
 
-.modal-body .avg-box{
-  background:linear-gradient(135deg,#f1f5f9,#e2e8f0);padding:14px;
-  border-radius:14px;margin-bottom:16px;font-size:13px;color:#334155;
-  line-height:1.8;border:1px solid #cbd5e1;text-align:center;
-}
-.modal-body .avg-box div{margin-bottom:2px}
-.modal-body .avg-box div.title{font-weight:800;color:#0f766e;margin-bottom:5px;font-size:13px}
-.modal-body .avg-box div.result{font-weight:800;color:#0f766e;margin-top:6px;font-size:16px}
-.custom-table{
-  width:100%;border-collapse:collapse;background:#fff;border:1px solid #cbd5e1;
-  border-radius:10px;overflow:hidden;margin-bottom:10px;font-size:11px;
-  box-shadow:0 2px 6px rgba(0,0,0,.04);
-}
-.custom-table th{
-  background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;
-  padding:9px 6px;text-align:center;font-weight:700;font-size:11px;
-}
-.custom-table td{
-  padding:9px 6px;border-bottom:1px solid #e2e8f0;text-align:center;
-  color:#334155;font-weight:500;
-}
-.custom-table tr:last-child td{border-bottom:none}
-.custom-table .total-row td{
-  background:linear-gradient(135deg,#ccfbf1,#99f6e4);font-weight:800;
-  color:#0f766e;font-size:12.5px;border-top:2px solid #0f766e;
-}
-.warning{
-  background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;
-  padding:12px;border-radius:12px;font-size:12px;margin-top:14px;
-  line-height:1.7;border:1px solid #fcd34d;font-weight:600;
-}
-.modal-footer{
-  padding:14px 20px 20px;display:flex;flex-direction:column;gap:8px;
-  background:#fff;border-top:1px solid #e2e8f0;
-}
-.btn-toggle-details{
-  background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1;
-  font-size:14px;padding:13px;border:1px solid #7dd3fc;font-weight:800;
-  border-radius:12px;
-}
-.btn-close{background:linear-gradient(135deg,#334155,#1e293b);color:#fff;font-size:14px;padding:13px;font-weight:700;border-radius:12px}
+.custom-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:10px;font-size:11px;box-shadow:0 2px 6px rgba(0,0,0,.04);}
+.custom-table th{background:var(--primary);color:#fff;padding:9px 6px;text-align:center;font-weight:700;font-size:11px;}
+.custom-table td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:center;color:var(--ink);font-weight:500;}
+.custom-table .total-row td{background:var(--primary-soft);font-weight:800;color:var(--primary);font-size:12.5px;border-top:2px solid var(--primary);}
+.warning{background:var(--ember-soft);color:var(--ember);padding:12px;border-radius:12px;font-size:12px;margin-top:14px;line-height:1.7;border:1px solid var(--ember);font-weight:600;}
 
-/* أزرار نافذة الأسعار */
-.prices-modal{
-  background:#fff;border-radius:26px;width:100%;max-width:520px;
-  overflow:hidden;box-shadow:0 25px 60px -12px rgba(0,0,0,0.4);
-  animation:pop .3s cubic-bezier(0.16,1,0.3,1);
-  max-height:90vh;display:flex;flex-direction:column;
-}
-.prices-modal-header{
-  background:linear-gradient(135deg,#0ea5e9,#0284c7);
-  color:#fff;padding:20px 22px;text-align:center;position:relative;
-}
-.prices-modal-header::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,#fbbf24,#f59e0b,#fbbf24);
-}
-.prices-modal-header .pm-title{font-size:16px;font-weight:800;margin:0}
-.prices-modal-header .pm-sub{font-size:12px;opacity:.92;margin-top:5px;font-weight:600}
-.prices-modal-body{
-  padding:16px 18px;overflow-y:auto;flex:1;background:#f8fafc;
-}
-.prices-modal-footer{
-  padding:14px 20px 18px;background:#fff;
-  border-top:1px solid #e2e8f0;
-}
+.modal-footer{padding:14px 20px 20px;display:flex;flex-direction:column;gap:8px;background:var(--card);border-top:1px solid var(--line);}
+.btn-toggle-details{background:var(--primary-soft);color:var(--primary);font-size:14px;padding:13px;border:1px solid var(--primary);font-weight:800;border-radius:12px;}
+.btn-close{background:var(--ink);color:var(--bg);font-size:14px;padding:13px;font-weight:700;border-radius:12px;}
+
+/* ============================================================
+   Developer Badge
+============================================================ */
+.developer-badge-container{display:flex;justify-content:center;margin:24px 12px 14px;}
+.developer-badge{background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:16px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.05);max-width:520px;width:100%;}
+.developer-badge .dev-title{font-size:12px;color:var(--mute);font-weight:700;margin-bottom:5px;}
+.developer-badge .dev-name{font-size:15px;color:var(--primary);font-weight:800;margin-bottom:8px;}
+.developer-badge .dev-desc{font-size:12px;color:var(--ink);line-height:1.7;}
+
+@media (max-width:600px){.mode-selector{gap:8px;}.mode-btn{font-size:12px;padding:10px 8px;min-height:56px;}}
 </style>
 </head>
 <body>
@@ -378,6 +223,12 @@ button:active{transform:scale(.97)}
   <div class="updated" id="updatedLabel">آخر تحديث للأسعار في —</div>
 </header>
 
+<!-- شريط معلومات العميل (يظهر فقط عند الربط مع التطبيق) -->
+<div class="card hidden" id="clientInfoCard" style="background:var(--ember-soft); border-color:var(--ember); text-align:center; font-weight:800; color:var(--ember); padding:12px; margin-bottom:0;">
+  <div id="clientName">اسم العميل</div>
+  <div id="clientAddress" style="font-size:12px; margin-top:4px; opacity:0.8;">العنوان</div>
+</div>
+
 <div class="card">
   <label id="labelMonths">عدد أشهر المحاسبة</label>
   <input type="number" id="months" value="1" min="1" inputmode="numeric">
@@ -386,10 +237,10 @@ button:active{transform:scale(.97)}
 
   <div class="mode-selector" id="modeSelector">
     <button type="button" class="mode-btn" id="modeDirectBtn" onclick="setInputMode('direct')">
-      <span id="modeDirectLabel">🎯 الاستهلاك</span>
+      <span>🎯 الاستهلاك المباشر</span>
     </button>
     <button type="button" class="mode-btn" id="modeReadingsBtn" onclick="setInputMode('readings')">
-      <span id="modeReadingsLabel">📊 إدخال القراءات السابقة والحالية</span>
+      <span>📊 إدخال القراءات</span>
     </button>
   </div>
 
@@ -408,21 +259,25 @@ button:active{transform:scale(.97)}
       <span class="value" id="consumptionValue">0</span>
       <span style="font-size:14px;">m³</span>
     </div>
-    <div id="readingError" class="msg" style="color:#b91c1c;min-height:0;"></div>
+    <div id="readingError" class="msg" style="color:var(--danger);min-height:0;font-size:12px;font-weight:700;margin-top:5px;"></div>
   </div>
 </div>
 
-<!-- زر حساب الفاتورة -->
+<!-- أزرار العمليات -->
 <button id="calcBtn" onclick="performCalculation()">
   <span id="calcBtnLabel">🧮 حساب الفاتورة</span>
 </button>
 
-<!-- زر الأسعار المطبقة حالياً -->
-<button id="currentPricesBtn" onclick="showCurrentPrices()">
-  <span id="currentPricesBtnLabel">💰 الأسعار المطبقة حالياً</span>
+<!-- يظهر فقط عند الربط مع التطبيق -->
+<button id="archiveBtn" class="hidden" onclick="saveToArchive()">
+  💾 حفظ الفاتورة والقراءة في الأرشيف
 </button>
 
-<!-- بطاقة إعداد وتطوير - في أسفل الصفحة -->
+<button id="currentPricesBtn" onclick="showCurrentPrices()">
+  <span>💰 الأسعار المطبقة حالياً</span>
+</button>
+
+<!-- بطاقة المطور -->
 <div class="developer-badge-container">
   <div class="developer-badge" id="developerBadge">
     <div class="dev-title" id="devTitle">إعداد وتطوير</div>
@@ -437,6 +292,9 @@ button:active{transform:scale(.97)}
 ============================================================ */
 const STORAGE_KEY = 'gasBillPeriods_v22';
 const FEES_KEY = 'gasBillFees_v22';
+
+// بيانات العميل (تأتي من التطبيق الأساسي)
+let clientData = null; 
 
 const DEFAULT_PERIODS = [
   { date:'2016-11-01', tiers:[{name:'الأولى',limit:30,price:0.75},{name:'الثانية',limit:60,price:1.50},{name:'الثالثة',limit:null,price:2.00}] },
@@ -453,9 +311,10 @@ const DEFAULT_PERIODS = [
 let periods = [];
 let fees = 18;
 let inputMode = null;
+let currentResult = null; // لحفظ نتيجة الحساب الحالية عند الأرشفة
 
 /* ============================================================
-   التخزين
+   التخزين والتحميل
 ============================================================ */
 function loadPeriods(){
   try{
@@ -478,6 +337,46 @@ function saveAll(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(periods));
     localStorage.setItem(FEES_KEY, String(fees));
   }catch(e){}
+}
+
+/* ============================================================
+   استقبال بيانات العميل من التطبيق (URL)
+============================================================ */
+function initClientData(){
+  const p = new URLSearchParams(location.search);
+  const name = p.get('n');
+  const key = p.get('k'); // مفتاح العميل (قطاع|بلوك|عمارة|شقة)
+  const prev = p.get('prev'); // القراءة السابقة
+
+  if (key && name) {
+    clientData = {
+      name: name,
+      key: key,
+      sector: p.get('s') || '',
+      blk: p.get('b') || '',
+      bld: p.get('d') || '',
+      apt: p.get('a') || '',
+      prevReading: prev ? Number(prev) : 0
+    };
+
+    // عرض بيانات العميل
+    const infoCard = document.getElementById('clientInfoCard');
+    infoCard.classList.remove('hidden');
+    document.getElementById('clientName').textContent = `👤 ${clientData.name}`;
+    document.getElementById('clientAddress').textContent = `قطاع ${clientData.sector} · بلوك ${clientData.blk} · عمارة ${clientData.bld} · شقة ${clientData.apt}`;
+
+    // تفعيل وضع القراءات تلقائياً وتعبئة القراءة السابقة
+    setInputMode('readings');
+    document.getElementById('prevReading').value = clientData.prevReading;
+    document.getElementById('prevReading').setAttribute('readonly', 'true'); // لمنع التعديل
+    document.getElementById('prevReading').style.background = '#e2e8f0';
+    
+    // إظهار زر الأرشفة
+    document.getElementById('archiveBtn').classList.remove('hidden');
+  } else {
+    // فتح الحاسبة بشكل مستقل (بدون عميل)
+    setInputMode('readings'); // الوضع الافتراضي
+  }
 }
 
 /* ============================================================
@@ -512,31 +411,26 @@ function updateConsumptionFromReadings(){
 
   if (diff < 0){
     valEl.textContent = '0';
-    valEl.style.color = '#b91c1c';
-    errEl.textContent = '⚠️ لا يجوز أن تكون القراءة الحالية أقل من القراءة السابقة';
+    valEl.style.color = 'var(--danger)';
+    errEl.textContent = '⚠️ لا يجوز أن تكون القراءة الحالية أقل من السابقة';
   } else {
     valEl.textContent = smartFmt(diff);
-    valEl.style.color = '#0f766e';
+    valEl.style.color = 'var(--primary)';
     errEl.textContent = '';
   }
 }
 
 /* ============================================================
-   خريطة أسماء الشرائح
+   دوال مساعدة (الحساب)
 ============================================================ */
-const TIER_NAME_MAP_REVERSE = {}; // لم نعد بحاجة للخريطة الإنجليزية
 const ArabicPeriodNames = ['', 'الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة', 'السابعة', 'الثامنة', 'التاسعة', 'العاشرة'];
 
 function getTierDisplayName(name){
-  if (TIER_NAME_MAP_REVERSE[name]) return TIER_NAME_MAP_REVERSE[name];
   const n = parseInt(name);
   if (!isNaN(n) && n >= 1 && n <= 10) return ArabicPeriodNames[n];
   return name;
 }
 
-/* ============================================================
-   أدوات التنسيق
-============================================================ */
 function smartFmt(val){
   const num = Number(val) || 0;
   if (Number.isInteger(num)) return num.toLocaleString('en-US');
@@ -558,18 +452,13 @@ function fmtMonthYear(y, m){
   return dt.toLocaleDateString('ar-EG',{month:'long', year:'numeric'});
 }
 
-/* ============================================================
-   تحويل الأرقام إلى كلمات عربية
-============================================================ */
 function numberToArabicWords(n){
   const num = Math.floor(Number(n) || 0);
   if (num === 0) return 'فقط صِفْرٌ\nجنيها مصريا فقط لاغير';
-
   const units = ['','مائة','مئتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
   const tens  = ['','عشرة','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
   const teens = ['عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
   const ones  = ['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة'];
-
   function less1000(val){
     if (val === 0) return '';
     let res = '';
@@ -608,69 +497,44 @@ function numberToArabicWords(n){
   return `فقط ${convert(num)}\nجنيها مصريا فقط لاغير`;
 }
 
-function getAmountInWords(amount){
-  return numberToArabicWords(amount);
-}
-
-/* ============================================================
-   حساب تكلفة شهر واحد
-============================================================ */
 function monthlyCostDetailed(cons, tiers){
   let rem = Number(cons) || 0;
   let cost = 0;
   let prev = 0;
   const tableRows = [];
-
   if (!Array.isArray(tiers)) return { cost:0, rows:[] };
-
   for (let i=0; i<tiers.length; i++){
     if (rem <= 0) break;
     const t = tiers[i];
-    let cap;
-    if (t.limit === null || t.limit === undefined || t.limit === '' || isNaN(t.limit)){
-      cap = rem;
-    } else {
-      cap = Math.max(0, Number(t.limit) - prev);
-    }
+    let cap = (t.limit === null || t.limit === undefined || t.limit === '' || isNaN(t.limit)) ? rem : Math.max(0, Number(t.limit) - prev);
     const used = Math.min(rem, cap);
     const tierCost = used * (Number(t.price) || 0);
     cost += tierCost;
     if (used > 0){
-      const displayName = getTierDisplayName(t.name);
       tableRows.push({
-        tierName: `شريحة ${displayName}`,
+        tierName: `شريحة ${getTierDisplayName(t.name)}`,
         price: t.price,
         meters: used,
         total: tierCost
       });
     }
     rem -= used;
-    if (t.limit !== null && t.limit !== undefined && t.limit !== '' && !isNaN(t.limit)){
-      prev = Number(t.limit);
-    }
+    if (t.limit !== null && t.limit !== undefined && t.limit !== '' && !isNaN(t.limit)){ prev = Number(t.limit); }
   }
   return { cost, rows: tableRows };
 }
 
-/* ============================================================
-   الحساب الرئيسي
-============================================================ */
 function calculateInternal(){
   if (inputMode === 'readings'){
     const prev = Number(document.getElementById('prevReading').value) || 0;
     const curr = Number(document.getElementById('currReading').value) || 0;
     if (curr < prev) return { error: 'reading_negative' };
   }
-
   if (!inputMode) return { error: 'no_mode' };
-
   const months = Number(document.getElementById('months').value) || 1;
   if (months < 1) return { error: 'months_invalid' };
 
-  let cons = 0;
-  let prevReading = 0;
-  let currReading = 0;
-
+  let cons = 0, prevReading = 0, currReading = 0;
   if (inputMode === 'readings'){
     prevReading = Number(document.getElementById('prevReading').value) || 0;
     currReading = Number(document.getElementById('currReading').value) || 0;
@@ -689,7 +553,6 @@ function calculateInternal(){
   const billPeriodText = `فاتورة شهر ${endMonthName}`;
 
   const sorted = [...periods].sort((a,b)=> a.date.localeCompare(b.date));
-
   let totalConsumptionCost = 0;
   const rows = [];
   let totalCovered = 0;
@@ -699,7 +562,6 @@ function calculateInternal(){
     const start = (i === 0) ? -Infinity : mIdx(pDate.y, pDate.m);
     const nextPDate = (i < sorted.length - 1) ? parseDate(sorted[i+1].date) : null;
     const end = nextPDate === null ? Infinity : mIdx(nextPDate.y, nextPDate.m) - 1;
-
     const s = Math.max(start, aStart);
     const e = Math.min(end, aEnd);
     const overlap = Math.max(0, e - s + 1);
@@ -710,303 +572,121 @@ function calculateInternal(){
     totalConsumptionCost += sub;
     totalCovered += overlap;
 
-    const startYear = Math.floor(s/12);
-    const startMonth = (s % 12) + 1;
-    const fromText = fmtMonthYear(startYear, startMonth);
-
-    const endYear = Math.floor(e/12);
-    const endMonth = (e % 12) + 1;
-    const toText = fmtMonthYear(endYear, endMonth);
+    const startYear = Math.floor(s/12), startMonth = (s % 12) + 1;
+    const endYear = Math.floor(e/12), endMonth = (e % 12) + 1;
 
     rows.push({
-      fromText, toText,
-      months: overlap,
-      monthlyCost: res.cost,
-      subtotal: sub,
-      tierRows: res.rows,
-      avg: avg
+      fromText: fmtMonthYear(startYear, startMonth), 
+      toText: fmtMonthYear(endYear, endMonth),
+      months: overlap, monthlyCost: res.cost, subtotal: sub,
+      tierRows: res.rows, avg: avg
     });
   }
 
   const exactGrandTotal = totalConsumptionCost + fees;
   const grandTotal = Math.round(exactGrandTotal);
-  const grandTotalWords = getAmountInWords(grandTotal);
+  const grandTotalWords = numberToArabicWords(grandTotal);
 
   return {
-    months, cons, fees, avg, rows,
-    inputMode,
-    prevReading, currReading,
-    totalConsumptionCost, grandTotal, exactGrandTotal,
-    totalCovered, billPeriodText, grandTotalWords
+    months, cons, fees, avg, rows, inputMode, prevReading, currReading,
+    totalConsumptionCost, grandTotal, exactGrandTotal, totalCovered, billPeriodText, grandTotalWords
   };
 }
 
 /* ============================================================
-   حساب الفاتورة عند الضغط على الزر
+   زر الحساب وفتح النتيجة
 ============================================================ */
 function performCalculation(){
-  if (!inputMode){
-    alert('⚠️ يرجى اختيار طريقة إدخال الاستهلاك أولاً');
-    return;
-  }
-
+  if (!inputMode){ alert('⚠️ يرجى اختيار طريقة إدخال الاستهلاك أولاً'); return; }
   if (inputMode === 'readings'){
     const prev = Number(document.getElementById('prevReading').value) || 0;
     const curr = Number(document.getElementById('currReading').value) || 0;
-    if (curr < prev){
-      alert('⚠️ لا يجوز أن تكون القراءة الحالية أقل من القراءة السابقة');
-      return;
-    }
+    if (curr < prev){ alert('⚠️ لا يجوز أن تكون القراءة الحالية أقل من السابقة'); return; }
   }
-
   const r = calculateInternal();
-  if (r.error){
-    alert('⚠️ بيانات غير صحيحة');
-    return;
-  }
-
+  if (r.error){ alert('⚠️ بيانات غير صحيحة'); return; }
+  currentResult = r; // حفظ النتيجة
   showResult(r);
 }
 
-/* ============================================================
-   عرض الأسعار المطبقة حالياً
-============================================================ */
-function showCurrentPrices(){
-  const sorted = [...periods].sort((a,b)=> a.date.localeCompare(b.date));
-  if (!sorted.length) return;
-
-  const latest = sorted[sorted.length - 1];
-  const startDate = parseDate(latest.date);
-  const startText = fmtMonthYear(startDate.y, startDate.m);
-
-  let tableRows = '';
-  latest.tiers.forEach(t=>{
-    const displayName = getTierDisplayName(t.name);
-    const tierLabel = `شريحة ${displayName}`;
-    const limitDisplay = (t.limit === null || t.limit === undefined || t.limit === '') ? '∞' : smartFmt(t.limit);
-    tableRows += `
-      <tr>
-        <td>${tierLabel}</td>
-        <td style="direction:ltr;">${limitDisplay}</td>
-        <td style="direction:ltr;">${smartFmt(t.price)}</td>
-      </tr>`;
-  });
-
-  const html = `
-    <div class="modal-overlay" id="pricesModal">
-      <div class="prices-modal">
-        <div class="prices-modal-header">
-          <div class="pm-title">💰 الأسعار المطبقة حالياً</div>
-          <div class="pm-sub">📅 سارية من ${startText}</div>
-        </div>
-        <div class="prices-modal-body">
-          <table class="custom-table">
-            <thead>
-              <tr>
-                <th>الشريحة</th>
-                <th>الأمتار</th>
-                <th>السعر</th>
-              </tr>
-            </thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-          <div style="margin-top:14px;padding:12px;background:#ccfbf1;border-radius:10px;text-align:center;font-weight:800;color:#0f766e;font-size:13.5px;border:1px solid #5eead4;">
-            الرسوم: ${smartFmt(fees)} ج.م
-          </div>
-        </div>
-        <div class="prices-modal-footer">
-          <button class="btn-close" id="closePricesModal" style="width:100%;">إغلاق</button>
-        </div>
-      </div>
-    </div>`;
-
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  document.body.appendChild(div.firstElementChild);
-
-  document.getElementById('closePricesModal').onclick = ()=>{
-    document.getElementById('pricesModal').remove();
-  };
-  document.getElementById('pricesModal').addEventListener('click', e=>{
-    if (e.target.id === 'pricesModal') e.target.remove();
-  });
-}
-
-/* ============================================================
-   عرض النتيجة
-============================================================ */
 function showResult(r){
   const isSinglePeriod = (r.rows.length === 1);
   const isSingleMonth = (r.months === 1);
-
   let inputsRowsHtml = '';
+
   if (r.inputMode === 'readings'){
     inputsRowsHtml = `
-      <div class="sb-row">
-        <span class="sb-label">عدد أشهر المحاسبة</span>
-        <span class="sb-value">${r.months}</span>
-      </div>
-      <div class="sb-row">
-        <span class="sb-label">القراءة السابقة</span>
-        <span class="sb-value">${smartFmt(r.prevReading)}</span>
-      </div>
-      <div class="sb-row">
-        <span class="sb-label">القراءة الحالية</span>
-        <span class="sb-value">${smartFmt(r.currReading)}</span>
-      </div>
-      <div class="sb-row">
-        <span class="sb-label">الاستهلاك</span>
-        <span class="sb-value">${smartFmt(r.cons)} m³</span>
-      </div>
-    `;
+      <div class="sb-row"><span class="sb-label">أشهر المحاسبة</span><span class="sb-value">${r.months}</span></div>
+      <div class="sb-row"><span class="sb-label">القراءة السابقة</span><span class="sb-value">${smartFmt(r.prevReading)}</span></div>
+      <div class="sb-row"><span class="sb-label">القراءة الحالية</span><span class="sb-value">${smartFmt(r.currReading)}</span></div>
+      <div class="sb-row"><span class="sb-label">الاستهلاك</span><span class="sb-value">${smartFmt(r.cons)} m³</span></div>`;
   } else {
     inputsRowsHtml = `
-      <div class="sb-row">
-        <span class="sb-label">عدد أشهر المحاسبة</span>
-        <span class="sb-value">${r.months}</span>
-      </div>
-      <div class="sb-row">
-        <span class="sb-label">الاستهلاك</span>
-        <span class="sb-value">${smartFmt(r.cons)} m³</span>
-      </div>
-    `;
+      <div class="sb-row"><span class="sb-label">أشهر المحاسبة</span><span class="sb-value">${r.months}</span></div>
+      <div class="sb-row"><span class="sb-label">الاستهلاك</span><span class="sb-value">${smartFmt(r.cons)} m³</span></div>`;
   }
 
-  const summaryHtml = `
-    <div class="summary-box">
-      <div class="sb-title">📋 البيانات المُدخَلة</div>
-      ${inputsRowsHtml}
-    </div>`;
-
+  const summaryHtml = `<div class="summary-box"><div class="sb-title">📋 البيانات المُدخَلة</div>${inputsRowsHtml}</div>`;
   let detailsHtml = '';
 
   if (!isSinglePeriod){
-    detailsHtml += `
-      <div style="background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;padding:8px 12px;border-radius:8px;text-align:center;margin-bottom:12px;">
-        ⚠️ كل فترة زمنية محسوبة طبقا للأسعار المقررة لتلك الفترة
-      </div>`;
+    detailsHtml += `<div style="background:var(--ember-soft);color:var(--ember);font-weight:700;font-size:12px;padding:8px 12px;border-radius:8px;text-align:center;margin-bottom:12px;">⚠️ كل فترة زمنية محسوبة طبقا للأسعار المقررة لتلك الفترة</div>`;
   }
 
   r.rows.forEach((row, idx)=>{
-    let periodLabel = '';
-    if (!isSinglePeriod){
-      const arabicNumName = ArabicPeriodNames[idx + 1] || (idx + 1);
-      periodLabel = `الفترة ${arabicNumName}:`;
-    }
-
+    let periodLabel = !isSinglePeriod ? `الفترة ${ArabicPeriodNames[idx + 1] || (idx + 1)}:` : '';
     let tableRowsHtml = '';
     row.tierRows.forEach(tr=>{
-      tableRowsHtml += `
-        <tr>
-          <td>${tr.tierName}</td>
-          <td style="direction:ltr;">${smartFmt(tr.meters)}</td>
-          <td style="direction:ltr;">${smartFmt(tr.price)}</td>
-          <td style="direction:ltr;">${smartFmt(tr.total)}</td>
-        </tr>`;
+      tableRowsHtml += `<tr><td>${tr.tierName}</td><td style="direction:ltr;">${smartFmt(tr.meters)}</td><td style="direction:ltr;">${smartFmt(tr.price)}</td><td style="direction:ltr;">${smartFmt(tr.total)}</td></tr>`;
     });
-
     detailsHtml += `
-      <div style="background:#f8fafc;padding:12px;border-radius:12px;margin-bottom:12px;border:1px solid #e2e8f0;">
-        <div class="period-header-row" style="display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px;color:#0f766e;margin-bottom:8px;">
-          <span>${periodLabel}</span>
-          <span>أشهر المحاسبة ${row.months}</span>
+      <div style="background:var(--card);padding:12px;border-radius:12px;margin-bottom:12px;border:1px solid var(--line);">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px;color:var(--primary);margin-bottom:8px;">
+          <span>${periodLabel}</span><span>أشهر المحاسبة ${row.months}</span>
         </div>
-        ${!isSinglePeriod ? `
-          <div style="font-size:12px;color:#334155;margin:8px 0;font-weight:600;text-align:center;">
-            من شهر ${row.fromText} إلى شهر ${row.toText}
-          </div>` : ''}
+        ${!isSinglePeriod ? `<div style="font-size:12px;color:var(--mute);margin:8px 0;font-weight:600;text-align:center;">من شهر ${row.fromText} إلى شهر ${row.toText}</div>` : ''}
         <table class="custom-table">
-          <thead>
-            <tr>
-              <th>الشريحة</th>
-              <th>الأمتار</th>
-              <th>السعر</th>
-              <th>الإجمالي</th>
-            </tr>
-          </thead>
+          <thead><tr><th>الشريحة</th><th>الأمتار</th><th>السعر</th><th>الإجمالي</th></tr></thead>
           <tbody>${tableRowsHtml}</tbody>
         </table>
-        ${!isSingleMonth ? `
-          <div style="font-size:12px;color:#0f766e;font-weight:700;text-align:left;background:#fff;padding:8px;border-radius:6px;border:1px solid #cbd5e1;display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
-            <span>مبلغ الاستهلاك لشهر واحد فقط</span>
-            <span style="direction:ltr;font-size:13px;">${smartFmt(row.monthlyCost)} ج.م</span>
-          </div>` : ''}
+        ${!isSingleMonth ? `<div style="font-size:12px;color:var(--primary);font-weight:700;text-align:left;background:var(--bg);padding:8px;border-radius:6px;border:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;margin-top:6px;"><span>مبلغ الاستهلاك لشهر واحد</span><span style="direction:ltr;font-size:13px;">${smartFmt(row.monthlyCost)} ج.م</span></div>` : ''}
       </div>`;
   });
 
   if (!isSingleMonth){
     detailsHtml += `
-      <div style="background:#ccfbf1;color:#0f766e;font-weight:700;font-size:13px;padding:8px 12px;border-radius:8px;text-align:center;margin:12px 0 10px;">
-        حساب الفاتورة الإجمالية
-      </div>
+      <div style="background:var(--primary-soft);color:var(--primary);font-weight:700;font-size:13px;padding:8px 12px;border-radius:8px;text-align:center;margin:12px 0 10px;">حساب الفاتورة الإجمالية</div>
       <table class="custom-table">
-        <thead>
-          <tr>
-            ${!isSinglePeriod ? `<th>الفترة</th>` : ''}
-            <th>الشهور</th>
-            <th>تكلفة الشهر</th>
-            <th>الإجمالي</th>
-          </tr>
-        </thead>
+        <thead><tr>${!isSinglePeriod ? `<th>الفترة</th>` : ''}<th>الشهور</th><th>تكلفة الشهر</th><th>الإجمالي</th></tr></thead>
         <tbody>`;
-
     r.rows.forEach((row, idx)=>{
       const periodLabel = `الفترة ${ArabicPeriodNames[idx+1] || (idx+1)}`;
-      detailsHtml += `
-        <tr>
-          ${!isSinglePeriod ? `<td>${periodLabel}</td>` : ''}
-          <td>${row.months}</td>
-          <td style="direction:ltr;">${smartFmt(row.monthlyCost)}</td>
-          <td style="direction:ltr;">${smartFmt(row.subtotal)}</td>
-        </tr>`;
+      detailsHtml += `<tr>${!isSinglePeriod ? `<td>${periodLabel}</td>` : ''}<td>${row.months}</td><td style="direction:ltr;">${smartFmt(row.monthlyCost)}</td><td style="direction:ltr;">${smartFmt(row.subtotal)}</td></tr>`;
     });
-
     detailsHtml += `
-          <tr>
-            <td colspan="${!isSinglePeriod ? '3' : '2'}" style="text-align:right;font-weight:700;">الرسوم</td>
-            <td style="direction:ltr;">${smartFmt(r.fees)}</td>
-          </tr>
-          <tr class="total-row">
-            <td colspan="${!isSinglePeriod ? '3' : '2'}" style="text-align:right;">الإجمالي</td>
-            <td style="direction:ltr;text-align:center;">${smartFmt(r.grandTotal)} ج.م</td>
-          </tr>
+          <tr><td colspan="${!isSinglePeriod ? '3' : '2'}" style="text-align:right;font-weight:700;">الرسوم</td><td style="direction:ltr;">${smartFmt(r.fees)}</td></tr>
+          <tr class="total-row"><td colspan="${!isSinglePeriod ? '3' : '2'}" style="text-align:right;">الإجمالي</td><td style="direction:ltr;text-align:center;">${smartFmt(r.grandTotal)} ج.م</td></tr>
         </tbody>
       </table>`;
   } else {
     detailsHtml += `
       <table class="custom-table" style="margin-top:12px;">
         <tbody>
-          <tr>
-            <td style="text-align:right;font-weight:700;">تكلفة الاستهلاك</td>
-            <td style="direction:ltr;text-align:left;width:120px;font-weight:700;">${smartFmt(r.totalConsumptionCost)} ج.م</td>
-          </tr>
-          <tr>
-            <td style="text-align:right;font-weight:700;">الرسوم</td>
-            <td style="direction:ltr;text-align:left;font-weight:700;">${smartFmt(r.fees)} ج.م</td>
-          </tr>
-          <tr class="total-row">
-            <td style="text-align:right;">إجمالى الفاتورة</td>
-            <td style="direction:ltr;text-align:left;">${smartFmt(r.grandTotal)} ج.م</td>
-          </tr>
+          <tr><td style="text-align:right;font-weight:700;">تكلفة الاستهلاك</td><td style="direction:ltr;text-align:left;width:120px;font-weight:700;">${smartFmt(r.totalConsumptionCost)} ج.م</td></tr>
+          <tr><td style="text-align:right;font-weight:700;">الرسوم</td><td style="direction:ltr;text-align:left;font-weight:700;">${smartFmt(r.fees)} ج.م</td></tr>
+          <tr class="total-row"><td style="text-align:right;">إجمالى الفاتورة</td><td style="direction:ltr;text-align:left;">${smartFmt(r.grandTotal)} ج.م</td></tr>
         </tbody>
       </table>`;
   }
 
-  let warning = '';
-  if (r.totalCovered !== r.months){
-    warning = `<div class="warning">⚠️ الأشهر المُغطاة لا تساوي عدد أشهر المحاسبة.</div>`;
-  }
+  let warning = r.totalCovered !== r.months ? `<div class="warning">⚠️ الأشهر المُغطاة لا تساوي عدد أشهر المحاسبة.</div>` : '';
 
-  let avgBoxHtml = '';
-  if (!isSingleMonth){
-    avgBoxHtml = `
-      <div class="avg-box">
-        <div class="title">متوسط الاستهلاك الشهرى</div>
-        <div>الاستهلاك / أشهر المحاسبة</div>
+  let avgBoxHtml = !isSingleMonth ? `
+      <div style="background:var(--bg);padding:14px;border-radius:14px;margin-bottom:16px;font-size:13px;color:var(--ink);line-height:1.8;border:1px solid var(--line);text-align:center;">
+        <div style="font-weight:800;color:var(--primary);margin-bottom:5px;font-size:13px;">متوسط الاستهلاك الشهرى</div>
         <div>${smartFmt(r.cons)} ÷ ${r.months}</div>
-        <div class="result">${smartFmt(r.avg)} m³</div>
-      </div>`;
-  }
+        <div style="font-weight:800;color:var(--primary);margin-top:6px;font-size:16px;">${smartFmt(r.avg)} m³</div>
+      </div>` : '';
 
   const html = `
     <div class="modal-overlay" id="resultModal">
@@ -1019,16 +699,10 @@ function showResult(r){
         </div>
         <div class="modal-body show" id="modalDetailsBody" style="padding-top:16px;">
           ${summaryHtml}
-          <div id="detailsWrapper" style="display:none;">
-            ${avgBoxHtml}
-            ${detailsHtml}
-            ${warning}
-          </div>
+          <div id="detailsWrapper" style="display:none;">${avgBoxHtml}${detailsHtml}${warning}</div>
         </div>
         <div class="modal-footer">
-          <button class="btn-toggle-details" id="toggleDetailsBtn" onclick="toggleResultDetails()">
-            📋 عرض التفاصيل الكاملة
-          </button>
+          <button class="btn-toggle-details" id="toggleDetailsBtn" onclick="toggleResultDetails()">📋 عرض التفاصيل الكاملة</button>
           <button class="btn-close" id="closeModal">إغلاق</button>
         </div>
       </div>
@@ -1038,70 +712,103 @@ function showResult(r){
   div.innerHTML = html;
   document.body.appendChild(div.firstElementChild);
 
-  document.getElementById('closeModal').onclick = ()=>{
-    document.getElementById('resultModal').remove();
-  };
-  document.getElementById('resultModal').addEventListener('click', e=>{
-    if (e.target.id === 'resultModal') e.target.remove();
-  });
+  document.getElementById('closeModal').onclick = ()=> document.getElementById('resultModal').remove();
+  document.getElementById('resultModal').addEventListener('click', e=> { if (e.target.id === 'resultModal') e.target.remove(); });
 }
 
-/* ============================================================
-   تبديل عرض التفاصيل داخل نافذة النتيجة
-============================================================ */
 function toggleResultDetails(){
   const wrapper = document.getElementById('detailsWrapper');
   const btn = document.getElementById('toggleDetailsBtn');
   if (!wrapper || !btn) return;
-
   const isHidden = (wrapper.style.display === 'none');
-  if (isHidden){
-    wrapper.style.display = 'block';
-    btn.textContent = '🔼 إخفاء التفاصيل';
-  } else {
-    wrapper.style.display = 'none';
-    btn.textContent = '📋 عرض التفاصيل الكاملة';
+  wrapper.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '🔼 إخفاء التفاصيل' : '📋 عرض التفاصيل الكاملة';
+}
+
+/* ============================================================
+   الأرشفة (حفظ الفاتورة والقراءة في قاعدة البيانات)
+============================================================ */
+async function saveToArchive(){
+  if (!clientData){
+    alert('⚠️ لا توجد بيانات عميل لربطها. هذه الميزة تعمل فقط عند فتح الحاسبة من التطبيق.');
+    return;
+  }
+  if (!currentResult){
+    alert('⚠️ يرجى حساب الفاتورة أولاً قبل الأرشفة.');
+    return;
+  }
+
+  // تأكيد
+  if (!confirm('هل تريد حفظ القراءة الحالية والفاتورة في الأرشيف؟\nسيتم اعتمادها كفاتورة الشهر القادم.')) return;
+
+  try{
+    // استيراد دالة قاعدة البيانات ديناميكياً (لأن الصفحة تعمل في iframe)
+    const { put } = await import('../core/db.js'); // تأكد من المسار الصحيح
+    
+    const id = 'inv-' + Date.now();
+    const invoiceData = {
+      id: id,
+      key: clientData.key, // مفتاح الشقة
+      name: clientData.name,
+      address: `قطاع ${clientData.sector} · بلوك ${clientData.blk} · عمارة ${clientData.bld} · شقة ${clientData.apt}`,
+      prevReading: currentResult.prevReading,
+      currReading: currentResult.currReading,
+      consumption: currentResult.cons,
+      totalAmount: currentResult.grandTotal,
+      date: new Date().toISOString(),
+      details: currentResult // لحفظ كل تفاصيل الحساب
+    };
+
+    // حفظ في قاعدة البيانات
+    await put('invoices', id, invoiceData);
+    
+    alert('✅ تم حفظ الفاتورة والقراءة بنجاح في الأرشيف!');
+    
+    // إغلاق النافذة والعودة للتطبيق الأساسي
+    if (window.parent && window.parent !== window) {
+      window.parent.document.querySelector('dialog[open]')?.close();
+    }
+  }catch(err){
+    console.error(err);
+    alert('❌ حدث خطأ أثناء الحفظ: ' + err.message + '\nتأكد من وجود جدول invoices في قاعدة البيانات.');
   }
 }
 
 /* ============================================================
-   تحديث الرأس
+   عرض الأسعار
 ============================================================ */
-function updateHeader(){
-  const now = new Date();
-  const monthName = now.toLocaleDateString('ar-EG', {month:'long', year:'numeric'});
-  document.getElementById('currentMonth').textContent = `الشهر الحالي: ${monthName}`;
+function showCurrentPrices(){
+  const sorted = [...periods].sort((a,b)=> a.date.localeCompare(b.date));
+  if (!sorted.length) return;
+  const latest = sorted[sorted.length - 1];
+  const startText = fmtMonthYear(parseDate(latest.date).y, parseDate(latest.date).m);
 
-  const sorted = [...periods].sort((a,b)=> b.date.localeCompare(a.date));
-  if (sorted.length){
-    document.getElementById('updatedLabel').textContent = `آخر تحديث للأسعار في ${fmtDateAr(sorted[0].date)}`;
-  }
+  let tableRows = '';
+  latest.tiers.forEach(t=>{
+    tableRows += `<tr><td>شريحة ${getTierDisplayName(t.name)}</td><td style="direction:ltr;">${(t.limit === null || t.limit === undefined || t.limit === '') ? '∞' : smartFmt(t.limit)}</td><td style="direction:ltr;">${smartFmt(t.price)}</td></tr>`;
+  });
+
+  const html = `
+    <div class="modal-overlay" id="pricesModal">
+      <div class="modal" style="max-width:400px;">
+        <div class="modal-header" style="background:var(--ember);">
+          <div class="bill-title">💰 الأسعار المطبقة</div>
+          <div style="font-size:12px;opacity:.9;">سارية من ${startText}</div>
+        </div>
+        <div class="modal-body show" style="padding:16px;">
+          <table class="custom-table"><thead><tr><th>الشريحة</th><th>الأمتار</th><th>السعر</th></tr></thead><tbody>${tableRows}</tbody></table>
+          <div style="margin-top:14px;padding:12px;background:var(--ember-soft);border-radius:10px;text-align:center;font-weight:800;color:var(--ember);font-size:13.5px;border:1px solid var(--ember);">الرسوم: ${smartFmt(fees)} ج.م</div>
+        </div>
+        <div class="modal-footer"><button class="btn-close" id="closePricesModal">إغلاق</button></div>
+      </div>
+    </div>`;
+
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  document.body.appendChild(div.firstElementChild);
+  document.getElementById('closePricesModal').onclick = ()=> document.getElementById('pricesModal').remove();
+  document.getElementById('pricesModal').addEventListener('click', e=>{ if (e.target.id === 'pricesModal') e.target.remove(); });
 }
-
-/* ============================================================
-   تحديث بطاقة المطور حسب اللغة
-============================================================ */
-function updateDeveloperBadge(){
-  const titleEl = document.getElementById('devTitle');
-  const nameEl = document.getElementById('devName');
-  const descEl = document.getElementById('devDesc');
-
-  titleEl.textContent = 'إعداد وتطوير';
-  nameEl.textContent = 'شريف محمد نشأت محمد';
-  descEl.textContent = 'تطبيق ذكي ومتقن دقيق الحسابات، مصمم خصيصاً ليقدم تجربة سهلة وسريعة تخدم كلًا من المحصل والعميل بكل شفافية وموثوقية.';
-}
-
-/* ============================================================
-   ربط الأحداث
-============================================================ */
-['months', 'consumption', 'prevReading', 'currReading'].forEach(id=>{
-  const el = document.getElementById(id);
-  if (el){
-    el.addEventListener('input', function(){
-      if (id === 'prevReading' || id === 'currReading') updateConsumptionFromReadings();
-    });
-  }
-});
 
 /* ============================================================
    التشغيل الأولي
@@ -1109,9 +816,18 @@ function updateDeveloperBadge(){
 (function init(){
   periods = loadPeriods();
   fees = loadFees();
-  updateHeader();
-  updateDeveloperBadge();
-  inputMode = null;
+  
+  const now = new Date();
+  document.getElementById('currentMonth').textContent = `الشهر الحالي: ${now.toLocaleDateString('ar-EG', {month:'long', year:'numeric'})}`;
+  const sorted = [...periods].sort((a,b)=> b.date.localeCompare(a.date));
+  if (sorted.length) document.getElementById('updatedLabel').textContent = `آخر تحديث للأسعار في ${fmtDateAr(sorted[0].date)}`;
+
+  initClientData();
+
+  ['months', 'consumption', 'prevReading', 'currReading'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', ()=> { if (id === 'prevReading' || id === 'currReading') updateConsumptionFromReadings(); });
+  });
 })();
 </script>
 </body>
