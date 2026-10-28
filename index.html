@@ -131,12 +131,10 @@
 
   var s = document.createElement('script');
   s.type = 'module';
-  // تم تصحيح المسار ليتوافق مع الـ base href
   s.src = '/Collection/js/collector/app.js'; 
   s.onerror = function(){ showDiag('فشل تحميل js/collector/app.js\nتأكد أن الملف موجود في المستودع.'); };
   document.body.appendChild(s);
 })();
 </script>
-<script src="fix_sync.js"></script>
 </body>
 </html>
