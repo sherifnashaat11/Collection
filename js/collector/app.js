@@ -143,6 +143,7 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
 });
 
 // ربط الأزرار من القائمة المنسدلة
+
 window.addEventListener('openTab', e => {
   const t = e.detail && e.detail.tab;
   if (!t) return;
@@ -150,13 +151,19 @@ window.addEventListener('openTab', e => {
   show(t);
 });
 
-$('back').onclick = () => history.back();
+// قم بحذف السطر الخاص بـ back من هنا
+
 addEventListener('popstate', () => {
   if (st.sel.size && !confirm('لديك تحديد غير محفوظ، هل تخرج؟')){
     history.pushState({v: 'bld'}, ''); return;
   }
   st.sel.clear(); show(tab);
 });
+
+
+
+
+
 
 const net = () => {
   $('net').textContent = navigator.onLine ? 'متصل' : 'بدون إنترنت';
