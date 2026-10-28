@@ -1,9 +1,8 @@
 import {get} from '../core/db.js';
 import {isOn, enable, disable, verify} from './lock.js';
 import {openExportDialog} from './exportExcel.js';
-
+// دالة إشعار محلية بسيطة
 function showToast(msg) {
-  // إشعار بسيط غير معطِّل
   const t = document.getElementById('toast');
   if (t) {
     t.textContent = msg;
@@ -17,6 +16,7 @@ function showToast(msg) {
 
 const ok = f => /^https:\/\//.test(f) || /^[\w.-]+\.html?$/.test(f);
 
+// التعديل هنا: إذا كان الملف gas_Calculator.html يفتح من الروت، وإلا من مجلد pages
 const url = f => {
   if (/^https:/.test(f)) return f;
   if (f.startsWith('gas_') || f === 'index.html') return f;
@@ -27,33 +27,20 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 
 /* ===== تعريف الأوضاع الأربعة (مركزي) ===== */
 export const THEMES = [
-  {
-    id: 'light',
-    label: '☀️ فاتح',
-    desc: 'نهاراً indoors',
-    preview: { bg: '#ffffff', fg: '#0f2438' }
-  },
-  {
-    id: 'dark',
-    label: '🌙 داكن',
-    desc: 'ليلاً، توفير بطارية',
-    preview: { bg: '#1e293b', fg: '#f1f5f9' }
-  },
-  {
-    id: 'desert',
-    label: '🏜️ صحراوي',
-    desc: 'شمس مباشرة، تقليل الوهج',
-    preview: { bg: '#fdf6ec', fg: '#3b2a1a' }
-  },
-  {
-    id: 'highcontrast',
-    label: '🌑 ليلي عالي التباين',
-    desc: 'تباين أقصى لضعف البصر',
-    preview: { bg: '#000000', fg: '#ffffff' }
-  }
+  { id: 'light',        label: '☀️ فاتح',              desc: 'نهاراً indoors',              preview: { bg: '#ffffff', fg: '#0f2438' } },
+  { id: 'dark',         label: '🌙 داكن',              desc: 'ليلاً، توفير بطارية',          preview: { bg: '#1e293b', fg: '#f1f5f9' } },
+  { id: 'desert',       label: '🏜️ صحراوي',            desc: 'شمس مباشرة، تقليل الوهج',      preview: { bg: '#fdf6ec', fg: '#3b2a1a' } },
+  { id: 'highcontrast', label: '🌑 ليلي عالي التباين',  desc: 'تباين أقصى لضعف البصر',        preview: { bg: '#000000', fg: '#ffffff' } }
 ];
 
 const VALID_IDS = THEMES.map(t => t.id);
+
+/* ===== تطبيق وضع على المستند + حفظ ===== */
+export function applyTheme(id){
+  if (!VALID_IDS.includes(id)) id = 'light';
+  document.body.setAttribute('data-theme', id);
+  try { localStorage.setItem('app-theme', id); } catch(e){}
+}
 
 /* ===== فتح صفحة داخل iframe ===== */
 export function openPage(file, params){
@@ -68,13 +55,6 @@ export function openPage(file, params){
   d.querySelector('#cl').onclick = () => { d.close(); d.remove(); };
   document.body.append(d);
   d.showModal();
-}
-
-/* ===== تطبيق وضع على المستند + حفظ ===== */
-export function applyTheme(id){
-  if (!VALID_IDS.includes(id)) id = 'light';
-  document.body.setAttribute('data-theme', id);
-  try { localStorage.setItem('app-theme', id); } catch(e){}
 }
 
 /* ===== بناء القائمة المنسدلة ===== */
@@ -108,7 +88,7 @@ export async function renderMenu(){
   // البحث خارج النطاق
   html += `<button type="button" data-search-all="1">🔍 بحث خارج النطاق</button>`;
 
-  // ===== التعديل: قائمة أوضاع العرض (فرعية قابلة للطي) =====
+  // ===== قائمة أوضاع العرض (4 أوضاع) =====
   const currentLabel = (THEMES.find(t => t.id === currentTheme) || THEMES[0]).label;
   html += `
     <div class="themes-group" data-themes-group="1">
@@ -188,16 +168,17 @@ export async function renderMenu(){
     };
   }
 
-  // ===== التعديل: ربط قائمة الأوضاع =====
+  // ===== ربط قائمة الأوضاع =====
   const themesToggle = m.querySelector('[data-themes-toggle]');
   const themesList = m.querySelector('[data-themes-list]');
   if (themesToggle && themesList){
     themesToggle.onclick = (ev) => {
       ev.stopPropagation();
-      const open = themesList.hidden;
-      themesList.hidden = !open;
-      themesToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      themesToggle.querySelector('.themes-arrow').textContent = open ? '▴' : '▾';
+      const willOpen = themesList.hidden;
+      themesList.hidden = !willOpen;
+      themesToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      const arrow = themesToggle.querySelector('.themes-arrow');
+      if (arrow) arrow.textContent = willOpen ? '▴' : '▾';
     };
   }
 
@@ -208,7 +189,6 @@ export async function renderMenu(){
       applyTheme(id);
       const label = (THEMES.find(t => t.id === id) || THEMES[0]).label;
       showToast('تم تفعيل: ' + label);
-      // إعادة رسم القائمة + الصفحة الحالية
       renderMenu();
       document.querySelector('#tabs button.on')?.click();
     };
