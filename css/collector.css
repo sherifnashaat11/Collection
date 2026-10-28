@@ -4,7 +4,7 @@
    الإصدار: 1.0.0
    ============================================================ */
 
-/* ===== الهيدر العلوي (الترتيب الجديد) ===== */
+/* ===== الهيدر العلوي ===== */
 .top{
   background: var(--grad-top);
   color: #e7eff5;
@@ -20,7 +20,7 @@
   gap: .6rem;
 }
 
-/* بداية (يمين في RTL): خروج + شبكة */
+/* بداية (يمين في RTL): القائمة */
 .top-start{
   display: flex;
   align-items: center;
@@ -63,7 +63,7 @@
   max-width: 200px;
 }
 
-/* النهاية (يسار في RTL): قائمة */
+/* النهاية (يسار في RTL): خروج + شبكة */
 .top-end{
   display: flex;
   align-items: center;
@@ -217,19 +217,10 @@ main{
 .sum b{ color: var(--ink); font-size: 1.1rem; font-weight: 800; }
 
 /* ============================================================
-   قائمة العمارات — 4 ألوان دورية متمايزة (لا تدرج)
-   كل لون ثابت حسب الترتيب: idx % 4 → 0,1,2,3
+   قائمة العمارات — لون موحد
+   التمييز يظهر فقط عند تفعيل فلتر
    ============================================================ */
 .blist{ display: grid; gap: .5rem; }
-
-/* الألوان الأربعة الأساسية للعمارات */
-.brow{
-  --row-tone: var(--collector);
-}
-.brow[data-cycle="0"]{ --row-tone: #7c3aed; }   /* بنفسجي */
-.brow[data-cycle="1"]{ --row-tone: #0ea5e9; }   /* أزرق سماوي */
-.brow[data-cycle="2"]{ --row-tone: #d97706; }   /* برتقالي */
-.brow[data-cycle="3"]{ --row-tone: #0d9668; }   /* أخضر */
 
 .brow.prow{
   display: grid;
@@ -237,9 +228,9 @@ main{
   gap: .5rem;
   align-items: center;
   text-align: right;
-  background: color-mix(in srgb, var(--row-tone) 10%, var(--card));
+  background: var(--card); /* لون موحد */
   border: 1px solid var(--line);
-  border-inline-start: 5px solid var(--row-tone);
+  border-inline-start: 5px solid var(--collector);
   border-radius: var(--r-md);
   padding: .75rem .85rem;
   min-height: 54px;
@@ -247,26 +238,36 @@ main{
   color: var(--ink);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
-  transition: transform .12s, box-shadow .2s, filter .15s;
+  transition: transform .12s, box-shadow .2s, background .2s;
 }
-.brow.prow:hover{ box-shadow: var(--shadow-md); filter: brightness(1.02); }
+.brow.prow:hover{ box-shadow: var(--shadow-md); }
 .brow.prow:active{ transform: scale(.98); }
 .brow.prow b{ font-size: .98rem; font-weight: 800; }
 .brow.prow strong{
-  color: var(--row-tone);
+  color: var(--collector);
   font-variant-numeric: tabular-nums;
   font-weight: 800;
   font-size: 1rem;
 }
 .brow.prow span{ color: var(--mute); font-size: .85rem; }
 
-/* التمييز بالفلتر: يظهر فقط عند تفعيل فلتر */
+/* التمييز بالفلتر */
 .brow.prow.hi{
-  background: color-mix(in srgb, var(--hl-blk) 18%, var(--card));
-  border-inline-start-color: var(--hl-blk);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hl-blk) 35%, transparent), var(--shadow-md);
+  background: color-mix(in srgb, var(--hl-blk) 18%, var(--card)) !important;
+  border-inline-start-color: var(--hl-blk) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hl-blk) 35%, transparent), var(--shadow-md) !important;
 }
-.brow.prow.hi strong{ color: var(--hl-blk); }
+.brow.prow.hi strong{ color: var(--hl-blk) !important; }
+
+/* الوضع الداكن */
+body[data-theme="dark"] .brow.prow,
+body[data-theme="highcontrast"] .brow.prow{
+  background: var(--card);
+}
+body[data-theme="dark"] .brow.prow.hi,
+body[data-theme="highcontrast"] .brow.prow.hi{
+  background: color-mix(in srgb, var(--hl-blk) 26%, var(--card)) !important;
+}
 
 /* ===== بطاقات الشقق ===== */
 .apt-list{ display: grid; gap: .4rem; }
@@ -778,8 +779,7 @@ dialog.viewer iframe{
 .menu{
   position: fixed;
   top: 68px;
-  inset-inline-end: 10px;
-  left: auto !important;
+  inset-inline-start: .8rem; /* القائمة الآن في اليمين حسب الترتيب المعكوس */
   z-index: 30;
   background: var(--card);
   border: 1px solid var(--line);
@@ -853,13 +853,14 @@ dialog.viewer iframe{
 .tabs button[data-t="ledger"].on{ border-top-color: var(--ledger); }
 .tabs button[data-t="search"].on{ border-top-color: var(--search); }
 
-/* ===== الإشعارات ===== */
+/* ===== الإشعارات (التنبيهات) ===== */
+/* تم تثبيت اللون الأبيض والخلفية السوداء لضمان القراءة في جميع الأوضاع */
 #toast{
   position: fixed;
   inset-inline: 1rem;
   bottom: 150px;
-  background: var(--ink);
-  color: #fff;
+  background: #111827; /* خلفية سوداء داكنة دائماً */
+  color: #ffffff !important; /* نص أبيض دائماً */
   border-radius: var(--r-md);
   padding: .8rem 1rem;
   text-align: center;
@@ -871,8 +872,9 @@ dialog.viewer iframe{
   box-shadow: var(--shadow-lg);
   max-width: 500px;
   margin: 0 auto;
-  font-weight: 600;
+  font-weight: 700;
   font-size: .95rem;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 #toast.show{ opacity: 1; transform: translateY(0); }
 
@@ -1057,7 +1059,6 @@ dialog.viewer iframe{
   border-radius: 10px !important;
 }
 
-/* الصف الأول: الاسم + المبلغ */
 .apt-card .apt-row-1 {
   display: flex;
   justify-content: space-between;
@@ -1096,7 +1097,6 @@ dialog.viewer iframe{
   transform: scale(.95);
 }
 
-/* الصف الثاني: الشقة + العدد + الشيك بوكس + زر القائمة */
 .apt-card .apt-row-2 {
   display: flex;
   align-items: center;
@@ -1142,9 +1142,7 @@ dialog.viewer iframe{
 }
 
 /* ============================================================
-   4 دورات لونية للشقق (بدل فردي/زوجي)
-   - تعتمد على --apt-tint الممرَّر من JS حسب ترتيب الظهور
-   - التلوين يبقى متصلاً عند اختفاء/سداد شقة
+   4 دورات لونية للشقق
    ============================================================ */
 .apt-card{
   background-color: color-mix(in srgb, var(--collector) var(--apt-tint, 0%), var(--card)) !important;
@@ -1163,14 +1161,13 @@ dialog.viewer iframe{
   border-color: var(--hl-bld);
 }
 
-/* ضمان تباين النص في كل الأوضاع */
 .apt-card .apt-row-1 .apt-name,
 .apt-card .apt-row-2 .apt-count{
   color: var(--ink) !important;
 }
 
 /* ============================================================
-   الأوضاع الداكنة (dark + highcontrast) — نِسَب أعلى
+   الأوضاع الداكنة (dark + highcontrast)
    ============================================================ */
 body[data-theme="dark"] .apt-card,
 body[data-theme="highcontrast"] .apt-card{
@@ -1188,16 +1185,6 @@ body[data-theme="highcontrast"] .apt-card.hi-apt{
 body[data-theme="dark"] .apt-card.hi-bld,
 body[data-theme="highcontrast"] .apt-card.hi-bld{
   background-color: color-mix(in srgb, var(--hl-bld) 30%, var(--card)) !important;
-}
-
-/* ألوان العمارات في الأوضاع الداكنة: نفس الألوان الأربعة لكن بنِسَب أعلى */
-body[data-theme="dark"] .brow.prow,
-body[data-theme="highcontrast"] .brow.prow{
-  background: color-mix(in srgb, var(--row-tone) 16%, var(--card));
-}
-body[data-theme="dark"] .brow.prow.hi,
-body[data-theme="highcontrast"] .brow.prow.hi{
-  background: color-mix(in srgb, var(--hl-blk) 26%, var(--card));
 }
 
 body[data-theme="dark"] .apt-card .apt-row-1 .apt-name,
@@ -1218,7 +1205,7 @@ body[data-theme="highcontrast"] .tabs{
   background: var(--grad-top);
 }
 
-/* جعل التطبيق يأخذ الشاشة كاملة (Full Screen) */
+/* جعل التطبيق يأخذ الشاشة كاملة */
 html, body {
   height: 100%;
   width: 100%;
@@ -1231,46 +1218,6 @@ html, body {
 /* منع ظهور شريط التمرير المزعج */
 body::-webkit-scrollbar { display: none; }
 body { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* الكارت السفلي الجديد (خط مضيء فقط) */
-.tabs {
-  background: var(--card);
-  border-top: 1px solid var(--line);
-  display: flex;
-  justify-content: space-around;
-  padding: 0;
-  height: 20px;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-}
-.tabs button {
-  flex: 1;
-  background: none;
-  border: none;
-  border-top: 4px solid transparent;
-  color: transparent;
-  padding: 0;
-  cursor: pointer;
-  transition: border-color 0.3s;
-}
-.tabs button.on {
-  border-top-color: var(--collector);
-}
-.tabs button .ico-emoji { display: none; }
-
-/* إزالة الخلفية الداكنة من الشريط السفلي */
-.tabs {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-top: none !important;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.tabs button {
-  background: rgba(255, 255, 255, 0.85);
-  margin: 0 2px;
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-  padding: 8px 2px;
-}
 
 /* ============================================================
    قائمة أوضاع العرض في القائمة المنسدلة
@@ -1386,4 +1333,23 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
   min-width: 1.2rem;
   text-align: center;
   flex: none;
+}
+
+/* إزالة الخلفية الداكنة من الشريط السفلي */
+.tabs {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-top: none !important;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabs button {
+  background: var(--card);
+  color: var(--mute);
+  margin: 0 2px;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  padding: 8px 2px;
+}
+.tabs button.on {
+  color: var(--collector);
 }
