@@ -13,20 +13,39 @@
 <link rel="stylesheet" href="css/collector.css">
 </head>
 <body>
-<header class="top"><div>
-  <button id="back" class="ico" aria-label="رجوع" onclick="history.back()" style="display:none; font-size: 24px;">➡️</button>
-  <svg viewBox="0 0 48 48" aria-hidden="true">
-    <path d="M24 3c3 9 14 13 14 26a14 14 0 0 1-28 0c0-6 3-9 6-12 0 5 3 7 5 7-2-8 0-15 3-21z" fill="#f2a516"/>
-    <path d="M24 24c2 4 7 6 7 12a7 7 0 0 1-14 0c0-4 4-6 7-12z" fill="#1e6fa8"/>
-  </svg>
-  <span style="flex: 1;">
-    <h1>محصّل الغاز</h1>
-    <p id="who">جارٍ التحقق…</p>
-  </span>
-  <span class="pill" id="net">…</span>
-  <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
-  <button class="ico power-btn" aria-label="خروج" onclick="window.close();" style="font-size: 22px; margin-inline-start: 5px;">⏻</button>
-</div></header>
+<header class="top">
+  <div class="top-inner">
+
+    <!-- أقصى اليمين: زر الخروج + مؤشر الشبكة -->
+    <div class="top-start">
+      <button id="exitBtn" class="ico power-btn" aria-label="خروج" title="خروج من التطبيق">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M12 3v9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          <path d="M6.4 6.4a8 8 0 1 0 11.2 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        </svg>
+      </button>
+      <span class="pill" id="net">…</span>
+    </div>
+
+    <!-- المنتصف: الشعار + العنوان + المستخدم -->
+    <div class="top-center">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M24 3c3 9 14 13 14 26a14 14 0 0 1-28 0c0-6 3-9 6-12 0 5 3 7 5 7-2-8 0-15 3-21z" fill="#f2a516"/>
+        <path d="M24 24c2 4 7 6 7 12a7 7 0 0 1-14 0c0-4 4-6 7-12z" fill="#1e6fa8"/>
+      </svg>
+      <div class="top-titles">
+        <h1>محصّل الغاز</h1>
+        <p id="who">جارٍ التحقق…</p>
+      </div>
+    </div>
+
+    <!-- أقصى اليسار: زر القائمة -->
+    <div class="top-end">
+      <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
+    </div>
+
+  </div>
+</header>
 
 <div id="menu" class="menu" hidden></div>
 
