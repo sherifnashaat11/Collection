@@ -14,23 +14,20 @@ const $ = id => document.getElementById(id);
 const view = $('view');
 let tab = 'home';
 
-
 const R = {
   home: () => renderHome(view),
   ledger: () => renderLedger(view, reload, doExport),
   search: () => renderSearch(view),
   searchAll: () => renderSearch(view, true),
-  searchFromHome: () => renderSearch(view, true, true), // إضافة وضع البحث من الصفحة الرئيسية
+  searchFromHome: () => renderSearch(view, true, true),
   archive: () => renderArchive(view),
   details: () => renderDetails(view, () => show('home'))
 };
 
-
-
 function show(t){
   tab = t;
   st.bld = null; st.all = false;
-  $('back').hidden = true;
+  // إخفاء زر الرجوع لم يعد له داعي
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   try { R[t](); } catch(e){ console.error('show(' + t + ')', e); toast('خطأ: ' + e.message); }
 }
@@ -142,8 +139,6 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
   show(b.dataset.t);
 });
 
-// ربط الأزرار من القائمة المنسدلة
-
 window.addEventListener('openTab', e => {
   const t = e.detail && e.detail.tab;
   if (!t) return;
@@ -151,7 +146,7 @@ window.addEventListener('openTab', e => {
   show(t);
 });
 
-// قم بحذف السطر الخاص بـ back من هنا
+// (تم حذف سطر زر الرجوع القديم من هنا)
 
 addEventListener('popstate', () => {
   if (st.sel.size && !confirm('لديك تحديد غير محفوظ، هل تخرج؟')){
@@ -159,11 +154,6 @@ addEventListener('popstate', () => {
   }
   st.sel.clear(); show(tab);
 });
-
-
-
-
-
 
 const net = () => {
   $('net').textContent = navigator.onLine ? 'متصل' : 'بدون إنترنت';
@@ -196,6 +186,30 @@ const VALID_THEMES = ['light', 'dark', 'desert', 'highcontrast'];
 const savedTheme = (localStorage.getItem('app-theme') || 'light').toLowerCase();
 document.body.setAttribute('data-theme', VALID_THEMES.includes(savedTheme) ? savedTheme : 'light');
 
+/* ===== زر الخروج (SVG) مع تأكيد + fallback ===== */
+const exitBtn = document.getElementById('exitBtn');
+if (exitBtn){
+  exitBtn.onclick = async () => {
+    if (!confirm('هل تريد الخروج من التطبيق؟')) return;
+    try{
+      window.close();
+      setTimeout(async () => {
+        try{
+          const {disable} = await import('./lock.js');
+          await disable();
+        }catch(e){}
+        try{
+          const {del} = await import('../core/db.js');
+          await del('meta', 'auth');
+        }catch(e){}
+        location.replace('login.html');
+      }, 200);
+    }catch(e){
+      location.replace('login.html');
+    }
+  };
+}
+
 /* ===== دعم إيماءات السحب للرجوع (Swipe Right) ===== */
 let touchStartX = 0;
 let touchStartY = 0;
@@ -215,19 +229,16 @@ document.addEventListener('touchend', (e) => {
   const distanceY = touchEndY - touchStartY;
 
   if (Math.abs(distanceX) > minSwipeDistance && Math.abs(distanceY) < 60) {
-    if (distanceX > 0) { // سحب لليمين (رجوع)
-      // إغلاق أي نافذة مفتوحة
+    if (distanceX > 0) { 
       const openDialog = document.querySelector('dialog[open]');
       if (openDialog) { openDialog.close(); openDialog.remove(); return; }
       
-      // الرجوع للتبويب الرئيسي إذا كنا في تبويب آخر
       const activeTab = document.querySelector('#tabs button.on');
       if (activeTab && activeTab.dataset.t !== 'home') {
         document.querySelector('#tabs button[data-t="home"]').click();
         return;
       }
       
-      // إغلاق العمارة إذا كنا داخلها (في الصفحة الرئيسية)
       const backBtn = document.getElementById('back');
       if (backBtn && !backBtn.hidden) {
         history.back();
@@ -239,37 +250,6 @@ document.addEventListener('touchend', (e) => {
     }
   }
 }, { passive: true });
-
-
-
-/* ===== زر الخروج (SVG) مع تأكيد + fallback ===== */
-const exitBtn = document.getElementById('exitBtn');
-if (exitBtn){
-  exitBtn.onclick = async () => {
-    if (!confirm('هل تريد الخروج من التطبيق؟')) return;
-    try{
-      // محاولة إغلاق النافذة (يعمل على PWA المثبتة على بعض الأجهزة)
-      window.close();
-      // إن لم تُغلق (الموبايل)، انتقل لصفحة الدخول بعد مسح الجلسة
-      setTimeout(async () => {
-        try{
-          const {disable} = await import('./lock.js');
-          await disable();
-        }catch(e){}
-        try{
-          const {del} = await import('../core/db.js');
-          await del('meta', 'auth');
-        }catch(e){}
-        location.replace('login.html');
-      }, 200);
-    }catch(e){
-      location.replace('login.html');
-    }
-  };
-}
-
-
-
 
 console.log('[app] started');
 boot();
