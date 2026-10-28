@@ -125,6 +125,50 @@
   }
 }
 
+/* ============================================================
+   التعديل الجديد: الوضع الفاتح القسري
+   عندما يختار المستخدم "الوضع الفاتح" على جهاز إعداداته داكنة،
+   فإن @media أعلاه ستفرض الداكن. هذه الكتلة تكسر السيطرة.
+   ============================================================ */
+body[data-theme="light"]{
+  --paper: #f4f7fa;
+  --paper-2: #e8eef4;
+  --card: #ffffff;
+  --line: #d6e0e8;
+
+  --ink: #0f2438;
+  --mute: #6b7f8f;
+  --soft: #9aafbf;
+
+  --flame: #1e6fa8;
+  --ember: #e8940c;
+  --ok: #0d9668;
+  --bad: #d63a3a;
+  --info: #3b82f6;
+
+  --hl-apt: #0ea5e9;
+  --hl-bld: #d946a8;
+  --hl-blk: #d97706;
+
+  --tag-personal: #7c3aed;
+  --tag-partial: #ea580c;
+  --tag-advance: #0d9668;
+  --tag-out: #d63a3a;
+  --tag-other: #475569;
+
+  --collector: #7c3aed;
+  --collector-soft: #ede9fe;
+  --ledger: #0ea5e9;
+  --ledger-soft: #e0f2fe;
+  --archive: #d97706;
+  --archive-soft: #fef3c7;
+  --details: #0d9668;
+  --details-soft: #d1fae5;
+  --search: #3b82f6;
+
+  --grad-top: linear-gradient(135deg, #0f2438 0%, #1e3a5f 100%);
+}
+
 /* ===== الأساسيات ===== */
 *{ box-sizing: border-box; margin: 0; padding: 0; }
 html{ direction: rtl; font-size: var(--fs-base); -webkit-text-size-adjust: 100%; }
