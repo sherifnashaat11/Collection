@@ -4,9 +4,6 @@
    الإصدار: 1.0.0
    ============================================================ */
 
-/* ===== الهيدر العلوي ===== */
-
-
 /* ===== الهيدر العلوي (الترتيب الجديد) ===== */
 .top{
   background: var(--grad-top);
@@ -141,7 +138,6 @@
   .pill{ font-size: .7rem; padding: .2rem .55rem; }
 }
 
-
 /* ===== الحاوية الرئيسية ===== */
 main{
   max-width: 640px;
@@ -151,22 +147,6 @@ main{
   gap: 1rem;
   padding-bottom: 10rem;
 }
-
-/* ===== الأزرار الأيقونية ===== */
-.ico{
-  background: rgba(255,255,255,0.12);
-  color: #fff;
-  border: 0;
-  border-radius: var(--r-md);
-  width: 42px; height: 42px;
-  font-size: 1.3rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .2s;
-}
-.ico:hover{ background: rgba(255,255,255,0.2); }
 
 /* ===== الحقول ===== */
 .field{ display: grid; gap: .25rem; }
@@ -192,6 +172,11 @@ main{
   outline: none;
 }
 .stack{ display: grid; gap: .8rem; margin: .8rem 0; }
+
+/* خيار العمارة المخفي */
+.field select option[hidden]{
+  display: none;
+}
 
 /* ===== شريط الاختيار ===== */
 .pick{
@@ -231,17 +216,30 @@ main{
 }
 .sum b{ color: var(--ink); font-size: 1.1rem; font-weight: 800; }
 
-/* ===== قائمة العمارات ===== */
+/* ============================================================
+   قائمة العمارات — 4 ألوان دورية متمايزة (لا تدرج)
+   كل لون ثابت حسب الترتيب: idx % 4 → 0,1,2,3
+   ============================================================ */
 .blist{ display: grid; gap: .5rem; }
+
+/* الألوان الأربعة الأساسية للعمارات */
 .brow{
+  --row-tone: var(--collector);
+}
+.brow[data-cycle="0"]{ --row-tone: #7c3aed; }   /* بنفسجي */
+.brow[data-cycle="1"]{ --row-tone: #0ea5e9; }   /* أزرق سماوي */
+.brow[data-cycle="2"]{ --row-tone: #d97706; }   /* برتقالي */
+.brow[data-cycle="3"]{ --row-tone: #0d9668; }   /* أخضر */
+
+.brow.prow{
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr auto;
   gap: .5rem;
   align-items: center;
   text-align: right;
-  background: var(--card);
+  background: color-mix(in srgb, var(--row-tone) 10%, var(--card));
   border: 1px solid var(--line);
-  border-inline-start: 5px solid var(--collector);
+  border-inline-start: 5px solid var(--row-tone);
   border-radius: var(--r-md);
   padding: .75rem .85rem;
   min-height: 54px;
@@ -249,23 +247,26 @@ main{
   color: var(--ink);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
-  transition: transform .12s, box-shadow .2s;
+  transition: transform .12s, box-shadow .2s, filter .15s;
 }
-.brow:hover{ box-shadow: var(--shadow-md); }
-.brow:active{ transform: scale(.98); }
-.brow b{ font-size: .98rem; font-weight: 800; }
-.brow strong{
-  color: var(--collector);
+.brow.prow:hover{ box-shadow: var(--shadow-md); filter: brightness(1.02); }
+.brow.prow:active{ transform: scale(.98); }
+.brow.prow b{ font-size: .98rem; font-weight: 800; }
+.brow.prow strong{
+  color: var(--row-tone);
   font-variant-numeric: tabular-nums;
   font-weight: 800;
   font-size: 1rem;
 }
-.brow span{ color: var(--mute); font-size: .85rem; }
-.brow.hi{
-  background: color-mix(in srgb, var(--hl-blk) 16%, var(--card));
+.brow.prow span{ color: var(--mute); font-size: .85rem; }
+
+/* التمييز بالفلتر: يظهر فقط عند تفعيل فلتر */
+.brow.prow.hi{
+  background: color-mix(in srgb, var(--hl-blk) 18%, var(--card));
   border-inline-start-color: var(--hl-blk);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hl-blk) 35%, transparent), var(--shadow-md);
 }
-.brow.hi strong{ color: var(--hl-blk); }
+.brow.prow.hi strong{ color: var(--hl-blk); }
 
 /* ===== بطاقات الشقق ===== */
 .apt-list{ display: grid; gap: .4rem; }
@@ -777,7 +778,8 @@ dialog.viewer iframe{
 .menu{
   position: fixed;
   top: 68px;
-  inset-inline-start: .8rem;
+  inset-inline-end: 10px;
+  left: auto !important;
   z-index: 30;
   background: var(--card);
   border: 1px solid var(--line);
@@ -965,20 +967,11 @@ dialog.viewer iframe{
   font-size: 1rem;
 }
 
-/* ===== مؤشر الرجوع ===== */
-#back{
-  background: rgba(255,255,255,0.15);
-  transition: background .2s;
-}
-#back:hover{ background: rgba(255,255,255,0.25); }
-
 /* ===== responsive ===== */
 @media(max-width: 400px){
   .pick{ grid-template-columns: repeat(4, 1fr); gap: .3rem; }
   .pick .num2{ font-size: .95rem; }
 }
-
-
 
 /* أوضاع العرض في صفحة التحصيل */
 .view-mode{
@@ -1052,15 +1045,6 @@ dialog.viewer iframe{
   font-weight: 800;
   font-size: 1rem;
 }
-
-
-
-
-
-
-
-
-
 
 /* ============================================================
    التصميم الجديد لبطاقة الشقة (سطرين)
@@ -1179,25 +1163,14 @@ dialog.viewer iframe{
   border-color: var(--hl-bld);
 }
 
-/* ===== عمارات: 4 دورات لونية أيضاً (تعتمد على --row-tint) ===== */
-.brow.prow{
-  background-color: color-mix(in srgb, var(--collector) var(--row-tint, 0%), var(--card));
-}
-.brow.hi{
-  background: color-mix(in srgb, var(--hl-blk) 16%, var(--card)) !important;
-  border-inline-start-color: var(--hl-blk);
-}
-
-/* ============================================================
-   ضمان تباين النص في كل الأوضاع
-   ============================================================ */
+/* ضمان تباين النص في كل الأوضاع */
 .apt-card .apt-row-1 .apt-name,
 .apt-card .apt-row-2 .apt-count{
   color: var(--ink) !important;
 }
 
 /* ============================================================
-   الأوضاع الداكنة (dark + highcontrast) — تلوين دوري بنِسَب أعلى
+   الأوضاع الداكنة (dark + highcontrast) — نِسَب أعلى
    ============================================================ */
 body[data-theme="dark"] .apt-card,
 body[data-theme="highcontrast"] .apt-card{
@@ -1216,10 +1189,17 @@ body[data-theme="dark"] .apt-card.hi-bld,
 body[data-theme="highcontrast"] .apt-card.hi-bld{
   background-color: color-mix(in srgb, var(--hl-bld) 30%, var(--card)) !important;
 }
+
+/* ألوان العمارات في الأوضاع الداكنة: نفس الألوان الأربعة لكن بنِسَب أعلى */
 body[data-theme="dark"] .brow.prow,
 body[data-theme="highcontrast"] .brow.prow{
-  background-color: color-mix(in srgb, var(--collector) calc(var(--row-tint, 0%) * 1.6), var(--card));
+  background: color-mix(in srgb, var(--row-tone) 16%, var(--card));
 }
+body[data-theme="dark"] .brow.prow.hi,
+body[data-theme="highcontrast"] .brow.prow.hi{
+  background: color-mix(in srgb, var(--hl-blk) 26%, var(--card));
+}
+
 body[data-theme="dark"] .apt-card .apt-row-1 .apt-name,
 body[data-theme="dark"] .apt-card .apt-row-2 .apt-count,
 body[data-theme="highcontrast"] .apt-card .apt-row-1 .apt-name,
@@ -1251,27 +1231,6 @@ html, body {
 /* منع ظهور شريط التمرير المزعج */
 body::-webkit-scrollbar { display: none; }
 body { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* تنسيق زر الطاقة */
-.power-btn {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-.power-btn:hover { background: rgba(255, 255, 255, 0.3); }
-
-/* إصلاح القائمة المنسدلة (⋮) لتكون في أقصى اليمين */
-.menu {
-  top: 70px;
-  inset-inline-end: 10px;
-  left: auto !important;
-}
 
 /* الكارت السفلي الجديد (خط مضيء فقط) */
 .tabs {
