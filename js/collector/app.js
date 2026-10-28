@@ -184,68 +184,11 @@ $('menuBtn').onclick = e => { e.stopPropagation(); $('menu').hidden = !$('menu')
 document.addEventListener('click', () => { $('menu').hidden = true; });
 
 
-// استرجاع الوضع الداكن المحفوظ
-const savedTheme = localStorage.getItem('app-theme');
-if (savedTheme === 'dark') {
-  document.body.setAttribute('data-theme', 'dark');
+// ===== استرجاع الوضع المحفوظ (يدعم 4 أوضاع) =====
+const VALID_THEMES = ['light', 'dark', 'desert', 'highcontrast'];
+const savedTheme = (localStorage.getItem('app-theme') || 'light').toLowerCase();
+document.body.setAttribute('data-theme', VALID_THEMES.includes(savedTheme) ? savedTheme : 'light');
 
-  /* ===== دعم إيماءات السحب للرجوع (Swipe Right/Left) ===== */
-let touchStartX = 0;
-let touchStartY = 0;
-const minSwipeDistance = 80; // الحد الأدنى للمسافة لاعتبارها سحبة
-
-document.addEventListener('touchstart', (e) => {
-  // تجاهل السحب إذا كان المستخدم يضغط على شريط التمرير أو المدخلات
-  if (e.target.closest('input, textarea, select, .no-swipe')) return;
-  
-  touchStartX = e.changedTouches[0].screenX;
-  touchStartY = e.changedTouches[0].screenY;
-}, { passive: true });
-
-document.addEventListener('touchend', (e) => {
-  if (e.target.closest('input, textarea, select, .no-swipe')) return;
-
-  const touchEndX = e.changedTouches[0].screenX;
-  const touchEndY = e.changedTouches[0].screenY;
-  
-  const distanceX = touchEndX - touchStartX;
-  const distanceY = touchEndY - touchStartY;
-
-  // التأكد من أن السحب أفقي وليس عمودياً (لتجنب التداخل مع التمرير)
-  if (Math.abs(distanceX) > minSwipeDistance && Math.abs(distanceY) < 50) {
-    // السحب لليمين (في الواجهات العربية RTL يعني رجوع)
-    if (distanceX > 0) {
-      // إذا كان هناك نافذة مفتوحة (dialog)، أغلقها
-      const openDialog = document.querySelector('dialog[open]');
-      if (openDialog) {
-        openDialog.close();
-        openDialog.remove();
-        return;
-      }
-      
-      // إذا كنا في تبويب غير الرئيسية، ارجع للرئيسية
-      const activeTab = document.querySelector('#tabs button.on');
-      if (activeTab && activeTab.dataset.t !== 'home') {
-        document.querySelector('#tabs button[data-t="home"]').click();
-        return;
-      }
-      
-      // إذا كنا داخل عمارة مفتوحة، أغلقها
-      if (st.open) {
-        st.open = null;
-        st.sel.clear();
-        renderHome(document.getElementById('view'));
-      }
-    }
-  }
-}, { passive: true });
-}
-
-
-
-
-console.log('[app] started');
-boot();
 /* ===== دعم إيماءات السحب للرجوع (Swipe Right) ===== */
 let touchStartX = 0;
 let touchStartY = 0;
@@ -289,3 +232,6 @@ document.addEventListener('touchend', (e) => {
     }
   }
 }, { passive: true });
+
+console.log('[app] started');
+boot();
