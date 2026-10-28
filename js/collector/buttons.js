@@ -1,7 +1,7 @@
 import {get} from '../core/db.js';
 import {isOn, enable, disable, verify} from './lock.js';
 import {openExportDialog} from './exportExcel.js';
-// دالة إشعار محلية بسيطة
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   if (t) {
@@ -16,7 +16,6 @@ function showToast(msg) {
 
 const ok = f => /^https:\/\//.test(f) || /^[\w.-]+\.html?$/.test(f);
 
-// التعديل هنا: إذا كان الملف gas_Calculator.html يفتح من الروت، وإلا من مجلد pages
 const url = f => {
   if (/^https:/.test(f)) return f;
   if (f.startsWith('gas_') || f === 'index.html') return f;
@@ -25,7 +24,6 @@ const url = f => {
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-/* ===== تعريف الأوضاع الأربعة (مركزي) ===== */
 export const THEMES = [
   { id: 'light',        label: '☀️ فاتح',              desc: 'نهاراً indoors',              preview: { bg: '#ffffff', fg: '#0f2438' } },
   { id: 'dark',         label: '🌙 داكن',              desc: 'ليلاً، توفير بطارية',          preview: { bg: '#1e293b', fg: '#f1f5f9' } },
@@ -35,14 +33,12 @@ export const THEMES = [
 
 const VALID_IDS = THEMES.map(t => t.id);
 
-/* ===== تطبيق وضع على المستند + حفظ ===== */
 export function applyTheme(id){
   if (!VALID_IDS.includes(id)) id = 'light';
   document.body.setAttribute('data-theme', id);
   try { localStorage.setItem('app-theme', id); } catch(e){}
 }
 
-/* ===== فتح صفحة داخل iframe ===== */
 export function openPage(file, params){
   const u = url(file) + (params ? '?' + params : '');
   const d = document.createElement('dialog');
@@ -57,7 +53,6 @@ export function openPage(file, params){
   d.showModal();
 }
 
-/* ===== بناء القائمة المنسدلة ===== */
 export async function renderMenu(){
   const f = await get('meta','file');
   const btns = ((f && f.buttons) || [])
@@ -79,8 +74,8 @@ export async function renderMenu(){
 
   html += '<hr>';
 
-  // زر حساب الفاتورة (الحاسبة)
-  html += `<button type="button" data-calc="1">🧮 حساب الفاتورة</button>`;
+  // زر حساب الفاتورة (الحاسبة المستقلة)
+  html += `<button type="button" data-calc="1">🧮 حساب الفاتورة (مستقل)</button>`;
 
   // تصدير Excel
   html += `<button type="button" data-export="1">📊 تصدير Excel (غير المسددين)</button>`;
@@ -88,7 +83,7 @@ export async function renderMenu(){
   // البحث خارج النطاق
   html += `<button type="button" data-search-all="1">🔍 بحث خارج النطاق</button>`;
 
-  // ===== قائمة أوضاع العرض (4 أوضاع) =====
+  // قائمة أوضاع العرض
   const currentLabel = (THEMES.find(t => t.id === currentTheme) || THEMES[0]).label;
   html += `
     <div class="themes-group" data-themes-group="1">
@@ -115,19 +110,16 @@ export async function renderMenu(){
 
   html += '<hr>';
 
-  // الواجهات الإضافية من الأدمن
   btns.forEach(x => {
     html += `<button type="button" data-f="${esc(x.file)}">${esc(x.name)}</button>`;
   });
 
-  // أزرار ثابتة
   html += '<hr>';
   html += '<button type="button" data-archive="1">📚 الأرشيف</button>';
   html += '<button type="button" data-details="1">📋 التفاصيل</button>';
 
   m.innerHTML = html;
 
-  // زر القفل
   m.querySelector('[data-lock]').onclick = async () => {
     m.hidden = true;
     try{
@@ -145,19 +137,17 @@ export async function renderMenu(){
     renderMenu();
   };
 
-  // زر الحاسبة
+  // فتح الحاسبة المستقلة بدون أي بيانات
   m.querySelector('[data-calc]').onclick = () => {
     m.hidden = true;
-    openPage('gas_Calculator.html');
+    openPage('calculator.html'); 
   };
 
-  // تصدير Excel
   m.querySelector('[data-export]').onclick = () => {
     m.hidden = true;
     openExportDialog();
   };
 
-  // زر البحث خارج النطاق
   const btnSearchAll = m.querySelector('[data-search-all]');
   if (btnSearchAll) {
     btnSearchAll.onclick = () => {
@@ -168,7 +158,6 @@ export async function renderMenu(){
     };
   }
 
-  // ===== ربط قائمة الأوضاع =====
   const themesToggle = m.querySelector('[data-themes-toggle]');
   const themesList = m.querySelector('[data-themes-list]');
   if (themesToggle && themesList){
@@ -185,21 +174,17 @@ export async function renderMenu(){
   m.querySelectorAll('[data-theme-pick]').forEach(btn => {
     btn.onclick = (ev) => {
       ev.stopPropagation();
-      const id = btn.dataset.themePick;
-      applyTheme(id);
-      const label = (THEMES.find(t => t.id === id) || THEMES[0]).label;
-      showToast('تم تفعيل: ' + label);
+      applyTheme(btn.dataset.themePick);
+      showToast('تم تفعيل الوضع');
       renderMenu();
       document.querySelector('#tabs button.on')?.click();
     };
   });
 
-  // الواجهات الإضافية من الأدمن
   m.querySelectorAll('[data-f]').forEach(btn => {
     btn.onclick = () => { m.hidden = true; openPage(btn.dataset.f); };
   });
 
-  // الأرشيف والتفاصيل
   m.querySelector('[data-archive]').onclick = () => {
     m.hidden = true;
     document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('on'));
