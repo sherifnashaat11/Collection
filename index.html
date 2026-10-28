@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<base href="/Collection/">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f2438">
@@ -24,9 +23,7 @@
     <h1>محصّل الغاز</h1>
     <p id="who">جارٍ التحقق…</p>
   </span>
-
   <span class="pill" id="net">…</span>
-  <button class="ico" id="ledgerBtn" aria-label="ما تم تحصيله" title="ما تم تحصيله" onclick="document.querySelector('#tabs button[data-t=\'ledger\']').click();" style="font-size: 20px;">✅</button>
   <button id="menuBtn" class="ico" aria-label="القائمة" hidden>⋮</button>
   <button class="ico power-btn" aria-label="خروج" onclick="window.close();" style="font-size: 22px; margin-inline-start: 5px;">⏻</button>
 </div></header>
@@ -66,7 +63,7 @@
   <button data-t="ledger"><span class="ico-emoji">✅</span>ما تم تحصيله</button>
   <button data-t="search"><span class="ico-emoji">🔍</span>بحث</button>
 </nav>
-  
+
 <footer class="app-footer" id="footer" hidden>
   <span>تطوير: <b>شريف نشأت</b></span>
   <span> · </span>
@@ -131,10 +128,11 @@
 
   var s = document.createElement('script');
   s.type = 'module';
-  s.src = '/Collection/js/collector/app.js'; 
+  s.src = 'js/collector/app.js';
   s.onerror = function(){ showDiag('فشل تحميل js/collector/app.js\nتأكد أن الملف موجود في المستودع.'); };
   document.body.appendChild(s);
 })();
 </script>
+
 </body>
 </html>

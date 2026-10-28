@@ -6,7 +6,6 @@ import { openPage } from './buttons.js';
 import { getManual, saveManual } from './names.js';
 import { choose } from './personal.js';
 import { monthOptions } from './monthly.js';
-import { searchKey } from '../core/normalize.js';
 
 export const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -22,7 +21,6 @@ const back = v => { const b = document.getElementById('back'); if (b) b.hidden =
 const num = s => +String(s||'').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const due = s => Math.max(0, s.value - (st.adv.get(key(s))||0));
 const tot = a => totals(a, due);
-const fz = s => searchKey(s).replace(/[خج]/g, 'ح').replace(/ذ/g, 'د');
 
 export async function refresh(){
   const mn = await getManual();
@@ -38,6 +36,11 @@ export async function refresh(){
 
 export const work = () => st.S.filter(s => (st.all || s.inRoute) && !st.paid.has(key(s)));
 
+
+
+
+
+
 export const toast = t => {
   const e = document.getElementById('toast');
   if (!e) return;
@@ -47,13 +50,8 @@ export const toast = t => {
   e._t = setTimeout(() => { e.className = ''; }, 2600);
 };
 
-export function setFilter(f){ st.filter = f; }
-export function clearFilter(){ st.filter = null; }
-export function inFilter(kind, k){
-  if (!st.filter) return false;
-  return st.filter.matches.has(kind + ':' + k);
-}
 
+/* ===== دالة تأكيد الطباعة بعد السداد ===== */
 function askPrint(entries) {
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -71,6 +69,7 @@ function askPrint(entries) {
     d.querySelector('#printNo').onclick = () => { d.close(); d.remove(); resolve(false); };
     d.querySelector('#printYes').onclick = () => {
       d.close(); d.remove();
+      // فتح صفحة الطباعة لكل عملية
       entries.forEach((e, idx) => {
         setTimeout(() => {
           const s = st.by.get(e.key) || {};
@@ -80,22 +79,54 @@ function askPrint(entries) {
             c: e.count || 0, m: st.cycle, u: st.who, k: e.key
           }).toString();
           window.open('pages/print.html?' + q, '_blank');
-        }, idx * 500);
+        }, idx * 500); // تأخير بسيط بين كل فاتورة لعدم حظر المتصفح
       });
       resolve(true);
     };
   });
 }
 
+
+export function setFilter(f){ st.filter = f; }
+export function clearFilter(){ st.filter = null; }
+export function inFilter(kind, k){
+  if (!st.filter) return false;
+  return st.filter.matches.has(kind + ':' + k);
+}
+
+export function receipt(e){
+  const s = st.by.get(e.key) || {};
+  const w = window.open('', '_blank', 'width=400,height=600');
+  if (!w) return;
+  w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>إيصال</title>
+  <style>body{font-family:Tahoma,sans-serif;padding:1rem;color:#0f2438}.r{max-width:340px;margin:auto;border:2px dashed #0f2438;border-radius:12px;padding:1rem}h1{font-size:1.1rem;text-align:center}.row{display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid #d6e0e8}.big{font-size:1.4rem;font-weight:800;text-align:center;margin:.9rem 0 .2rem}.foot{text-align:center;color:#6b7f8f;font-size:.8rem;margin-top:.6rem}</style></head><body>
+  <div class="r"><h1>إيصال سداد غاز</h1>
+  <div class="row"><b>العميل</b><span>${esc(s.name||'بدون اسم')}</span></div>
+  <div class="row"><b>العنوان</b><span>قطاع ${s.sector||'—'} · بلوك ${s.blk||'—'} · عمارة ${s.bld||'—'} · شقة ${s.apt||'—'}</span></div>
+  <div class="row"><b>التاريخ</b><span>${new Date(e.time).toLocaleString('ar-EG')}</span></div>
+  <div class="row"><b>النوع</b><span>${e.type==='advance'?'سداد مقدم':'سداد'}</span></div>
+  <div class="big">${Number(e.amount||0).toLocaleString('en-US')} جنيه</div>
+  <div class="foot">المحصل: ${esc(st.who||'')} · إصدار ${esc(st.cycle||'')}</div>
+  </div><script>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+  w.document.close();
+}
+
+/* ===== التصميم الجديد لبطاقات الشقق ===== */
 function aptsView(a){
   const ch = a.filter(s => st.sel.has(key(s)));
   const ct = tot(ch);
   const allTot = tot(a);
   
-  const totalBuildingDue = allTot.value;
-  const selectedDue = ct.value;
+  
+  
+    const totalBuildingDue = allTot.value; // إجمالي المديونية في العمارة
+  const selectedDue = ct.value; // إجمالي المحدد
   const remainingValue = totalBuildingDue - selectedDue;
-
+  
+  
+  
+  
+  
   const cards = a.map(s => {
     const k = key(s);
     const b = st.adv.get(k) || 0;
@@ -160,6 +191,7 @@ function aptsView(a){
   return {html: cards, ch, ct, allTot, barHtml};
 }
 
+/* ===== السداد الجزئي ===== */
 function partialDialog(s){
   return new Promise(resolve => {
     const d = document.createElement('dialog');
@@ -219,6 +251,7 @@ function partialDialog(s){
   });
 }
 
+/* ===== ربط أحداث الشقق ===== */
 function bind(el, a, v, again){
   el.querySelectorAll('[data-k]').forEach(c => {
     c.onchange = () => { c.checked ? st.sel.add(c.dataset.k) : st.sel.delete(c.dataset.k); again(); };
@@ -287,13 +320,27 @@ function bind(el, a, v, again){
       const k = btn.dataset.p, s = st.by.get(k), amt = due(s);
       if (!amt){ toast('لا يوجد مبلغ مستحق'); return; }
       if (!confirm(`تأكيد سداد شقة ${s.apt} — ${s.name||'بدون اسم'} بمبلغ ${money(amt)} جنيه؟`)) return;
-      const entry = await pay(st.no, [s], st.adv);
+     
+
+
+
+
+
+	      const entry = await pay(st.no, [s], st.adv);
       await put('lastPosition','last',{sector:st.sector, blk:st.blk, bld:st.bld});
       st.sel.delete(k);
       await refresh();
       toast(`تم سداد شقة ${s.apt} (${money(amt)} جنيه)`);
+      
+      // رسالة تأكيد الطباعة
       await askPrint([entry || { key: k, due: s.value, amount: amt, count: s.count, fromAdvance: 0 }]);
+      
       again();
+	  
+	  
+	  
+	  
+	  
     };
   });
 
@@ -302,16 +349,30 @@ function bind(el, a, v, again){
     if (!v.ch.length) return;
     const amt = v.ct.value;
     if (!confirm(`تأكيد سداد ${v.ch.length} شقة بمبلغ ${money(amt)} جنيه؟`)) return;
-    const entries = await pay(st.no, v.ch, st.adv);
+    
+	
+	
+	
+	
+	    const entries = await pay(st.no, v.ch, st.adv);
     await put('lastPosition','last',{sector:st.sector, blk:st.blk, bld:st.bld});
     st.sel.clear();
     await refresh();
     toast(`تم سداد ${v.ch.length} شقة (${money(amt)} جنيه)`);
+    
+    // رسالة تأكيد الطباعة لكل شقة
     await askPrint(entries || v.ch.map(s => ({ key: key(s), due: s.value, amount: due(s), count: s.count, fromAdvance: 0 })));
+    
     again();
+	
+	
+	
+	
+	
   };
 }
 
+/* ===== الصفحة الرئيسية ===== */
 export async function renderHome(el){
   const y = scrollY; back(false);
   const w = work();
@@ -327,299 +388,109 @@ export async function renderHome(el){
   if (!secs.includes(st.sector)) st.sector = secs[0];
   const blks = [...new Set(w.filter(s => s.sector===st.sector).map(s => s.blk))].sort(srt);
   if (!blks.includes(st.blk)) st.blk = blks[0];
-  
   const rows = w.filter(s => s.sector===st.sector && s.blk===st.blk);
   const g = {};
   rows.forEach(s => (g[s.bld] = g[s.bld] || []).push(s));
-  
-  const availableBlds = Object.keys(g).sort(srt);
-  const allBlds = [...new Set(st.S.filter(s => s.sector === st.sector && s.blk === st.blk).map(s => s.bld))].sort(srt);
-  const paidBlds = allBlds.filter(b => !availableBlds.includes(b));
-
   const t = tot(rows);
   const opt = (a,v) => a.map(x => `<option ${x===v?'selected':''}>${x}</option>`).join('');
 
   let ov = null;
-  let currentMode = 'list';
-
-  const buildSearchHtml = () => `
-    <div id="searchPanel" style="display:none; margin-bottom: 15px; padding: 15px; background: var(--paper-2); border-radius: var(--r-md); border: 1px solid var(--line);">
-      <div id="searchNameWrap" style="display:none;">
-        <input id="mainSearchInput" type="text" placeholder="اكتب اسم العميل…" style="width:100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line); font-family: inherit; margin-bottom: 10px;">
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-          <label class="chk" style="flex:1;"><input type="radio" name="mScope" value="all" checked> الملف كاملاً</label>
-        </div>
-        <button class="btn sm" id="mainSearchBtnName" style="width:100%;">بحث</button>
-      </div>
-      <div id="searchCodeWrap" style="display:none;">
-        <div class="pick" style="grid-template-columns:1fr 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
-          <label class="field"><span>القطاع</span><input id="mSec" class="num2" type="text" maxlength="2"></label>
-          <label class="field"><span>البلوك</span><input id="mBlk" class="num2" type="text" maxlength="2"></label>
-          <label class="field"><span>العمارة</span><input id="mBld" class="num2" type="text" maxlength="2"></label>
-          <label class="field"><span>الشقة (اختياري)</span><input id="mApt" class="num2" type="text" maxlength="2"></label>
-        </div>
-        <button class="btn sm" id="mainSearchBtnCode" style="width:100%;">بحث</button>
-      </div>
-      <button class="btn ghost sm" id="cancelSearchBtn" style="width:100%; margin-top: 10px;">إلغاء البحث</button>
-    </div>
-  `;
 
   let html = `
-  <div class="view-mode" style="display: flex; gap: 10px; margin-bottom: 15px;">
-    <button class="btn ${currentMode === 'search-name' ? '' : 'ghost'}" id="btnSearchName" style="flex:1; font-size:14px;">🔍 بحث بالاسم</button>
-    <button class="btn ${currentMode === 'search-code' ? '' : 'ghost'}" id="btnSearchCode" style="flex:1; font-size:14px;">🔍 بحث برقم المشترك</button>
+  <div style="margin-bottom: 10px;">
+    <button class="btn" id="mainSearchBtn" style="width: 100%; font-size: 14px; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white;">🔍 بحث خارج النطاق</button>
   </div>
-  ${buildSearchHtml()}
-  <div id="mainResultsArea">
-    <div class="pick">
-      <label class="field"><span>القطاع</span><select id="sSec">${opt(secs,st.sector)}</select></label>
-      <label class="field"><span>البلوك</span><select id="sBlk">${opt(blks,st.blk)}</select></label>
-      <label class="field"><span>العمارة</span>
-        <select id="sBld">
-          ${availableBlds.map(b => `<option value="${b}" ${st.open === b ? 'selected' : ''}>${b}</option>`).join('')}
-        </select>
-      </label>
-    </div>
-    <div class="view-mode" style="display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 10px;">
-      <button class="btn ghost sm" id="modeList" type="button" style="flex: 1;">عرض القائمة</button>
-      <input id="bldIn" class="num2" type="text" inputmode="numeric" maxlength="2" placeholder="رقم العمارة" value="${st.open||''}" style="flex: 1; min-height: 40px; text-align: center; font-weight: 800;">
-    </div>
-    <p class="sum">${t.n} شقة · ${t.count} فاتورة · <b>${money(t.value)}</b> جنيه</p>
-    <div class="blist" id="mainBlist">`;
+  <div class="pick">
+    <label class="field"><span>القطاع</span><select id="sSec">${opt(secs,st.sector)}</select></label>
+    <label class="field"><span>البلوك</span><select id="sBlk">${opt(blks,st.blk)}</select></label>
+    <label class="field"><span>العمارة</span>
+      <select id="sBld">
+        <option value="">— اختر —</option>
+        ${Object.keys(g).sort((a,b)=> Number(a)-Number(b)).map(b => `<option value="${b}" ${st.open === b ? 'selected' : ''}>${b}</option>`).join('')}
+      </select>
+    </label>
+  </div>
+  <div style="margin-bottom: 10px; font-size: 12px; color: var(--mute); text-align: center;">
+    آخر عمارة: ${st.open ? `عمارة ${st.open} (اضغط للرجوع)` : 'لم يتم فتح عمارة بعد'}
+  </div>
+  <div class="view-mode" style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
+    <button class="btn ghost sm" id="modeList" type="button" style="flex: 1;">عرض القائمة</button>
+    <input id="bldIn" class="num2" type="text" inputmode="numeric" maxlength="2" placeholder="رقم العمارة" value="${st.open||''}" style="flex: 1; min-height: 40px; text-align: center; font-weight: 800;">
+  </div>
+  <p class="sum">${t.n} شقة · ${t.count} فاتورة · <b>${money(t.value)}</b> جنيه</p>
+  <div class="blist">`;
 
   if (st.open && g[st.open]){
     st.bld = st.open;
-    localStorage.setItem('lastPosition', JSON.stringify({ sector: st.sector, blk: st.blk, bld: st.open }));
+	
+	
+	  // حفظ آخر عمارة تم فتحها
+    localStorage.setItem('lastPosition', JSON.stringify({
+      sector: st.sector,
+      blk: st.blk,
+      bld: st.open
+    }));
+	
+	
+	
+	
+	
     const aa = g[st.open].sort((p,q) => srt(p.apt, q.apt));
     ov = {a: aa, v: aptsView(aa)};
     
-    const currentIdx = availableBlds.indexOf(st.open);
-    const prevBld = currentIdx > 0 ? availableBlds[currentIdx - 1] : null;
-    const nextBld = currentIdx < availableBlds.length - 1 ? availableBlds[currentIdx + 1] : null;
+    const sortedBlds = Object.keys(g).sort((a,b) => Number(a)-Number(b));
+    const currentIdx = sortedBlds.indexOf(st.open);
+    const prevBld = currentIdx > 0 ? sortedBlds[currentIdx - 1] : null;
+    const nextBld = currentIdx < sortedBlds.length - 1 ? sortedBlds[currentIdx + 1] : null;
 
     html += `
+	
+	
+	      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+      <button class="btn ghost sm" data-nav="prev" ${prevBld ? '' : 'disabled'} style="flex:1; margin-left:5px;">⏩    السابق</button>
+      <button class="btn ghost sm" data-nav="next" ${nextBld ? '' : 'disabled'} style="flex:1; margin-right:5px;"> التالي    ⏪</button>
     </div>
-    <div id="buildingView">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-        <button class="btn ghost sm" data-nav="prev" ${prevBld ? '' : 'disabled'} style="flex:1; margin-left:5px;">⏪ السابق</button>
-        <button class="btn ghost sm" data-nav="next" ${nextBld ? '' : 'disabled'} style="flex:1; margin-right:5px;">التالي ⏩</button>
+	
+	
+	
+	
+	
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+       
+	   <h2 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">عمارة ${st.open} <span style="font-size: 16px; color: var(--ember); font-weight: 800;">(${money(tot(aa).value)} ج)</span></h2>
+	   
+	   
+	   
+	   
+        <label class="chk"><input type="checkbox" id="selectAllApts" ${aa.length > 0 && aa.every(s => st.sel.has(key(s))) ? 'checked' : ''}> تحديد الكل</label>
       </div>
-      <div class="card apts" style="padding: 10px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h2 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">عمارة ${st.open} <span style="font-size: 16px; color: var(--ember); font-weight: 800;">(${money(tot(aa).value)} ج)</span></h2>
-          <label class="chk"><input type="checkbox" id="selectAllApts" ${aa.length > 0 && aa.every(s => st.sel.has(key(s))) ? 'checked' : ''}> تحديد الكل</label>
-        </div>
-        ${ov.v.html}
-        ${ov.v.barHtml}
-      </div>
+	  
+	  
+	  
+      ${ov.v.html}
+      ${ov.v.barHtml}
     </div>`;
   } else {
     Object.keys(g).sort(srt).forEach(b => {
       const x = tot(g[b]);
       const o = st.open === b;
       let hiClass = '';
+      if (st.filter){
+        if (st.filter.kind === 'blk' && st.filter.matches.has('blk:' + st.sector + '|' + st.blk)) hiClass = 'hi';
+        if (st.filter.kind === 'bld' && st.filter.matches.has('bld:' + st.sector + '|' + st.blk + '|' + b)) hiClass = 'hi';
+        if (st.filter.kind === 'apt'){
+          const hasMatch = g[b].some(s => st.filter.matches.has('apt:' + key(s)));
+          if (hasMatch) hiClass = 'hi';
+        }
+      }
       const cells = `<b>عمارة ${b}</b><span>${x.n} شقة</span><span>${x.count} فاتورة</span><strong>${money(x.value)}</strong>`;
       html += `<div class="brow prow ${o?'open':''} ${hiClass}" data-b="${b}" role="button" tabindex="0">${cells}</div>`;
     });
-    html += `</div></div>`;
   }
 
-   html += `
-  <div style="margin-top: 15px;">
-    <button class="btn ghost" id="mainSearchBtn" style="width: 100%; font-size: 14px; background: var(--collector-soft); color: var(--collector);">🔍 بحث شامل</button>
-  </div>
-  `;
+  el.innerHTML = html + '</div>';
 
-  el.innerHTML = html;
-
-  const handleBuildingSelection = (targetValue) => {
-    if (!targetValue) return;
-    
-    let finalTarget = targetValue;
-    if (targetValue.length === 1) finalTarget = '0' + targetValue;
-
-    if (availableBlds.includes(finalTarget)) {
-      const sBldEl = el.querySelector('#sBld');
-      if (sBldEl) {
-          for (let i = 0; i < sBldEl.options.length; i++) {
-              if (sBldEl.options[i].value === finalTarget) {
-                  sBldEl.selectedIndex = i;
-                  break;
-              }
-          }
-      }
-      const bldInEl = el.querySelector('#bldIn');
-      if (bldInEl && bldInEl.value !== finalTarget) {
-          bldInEl.value = finalTarget;
-      }
-
-      st.open = finalTarget;
-      st.bld = finalTarget;
-      
-      if (el.querySelector('#buildingView') && st.open === finalTarget) return; 
-      
-      const yScroll = window.scrollY;
-      renderHome(el);
-      window.scrollTo(0, yScroll);
-      
-    } else if (paidBlds.includes(finalTarget)) {
-      toast(`عمارة ${finalTarget} مسددة بالكامل.`);
-      const bldInEl = el.querySelector('#bldIn');
-      if (bldInEl) bldInEl.value = st.open || ''; 
-    } else {
-      toast(`العمارة ${finalTarget} غير موجودة.`);
-      const bldInEl = el.querySelector('#bldIn');
-      if (bldInEl) bldInEl.value = st.open || ''; 
-    }
-  };
-
-  const searchPanel = el.querySelector('#searchPanel');
-  const nameWrap = el.querySelector('#searchNameWrap');
-  const codeWrap = el.querySelector('#searchCodeWrap');
-  const inputName = el.querySelector('#mainSearchInput');
-  const mainBlist = el.querySelector('#mainBlist');
-
-  el.querySelector('#btnSearchName').onclick = () => {
-    currentMode = 'search-name';
-    searchPanel.style.display = 'block';
-    nameWrap.style.display = 'block';
-    codeWrap.style.display = 'none';
-    el.querySelector('#btnSearchName').classList.remove('ghost');
-    el.querySelector('#btnSearchCode').classList.add('ghost');
-    mainBlist.innerHTML = '';
-    inputName.focus();
-  };
-
-  el.querySelector('#btnSearchCode').onclick = () => {
-    currentMode = 'search-code';
-    searchPanel.style.display = 'block';
-    nameWrap.style.display = 'none';
-    codeWrap.style.display = 'block';
-    el.querySelector('#btnSearchCode').classList.remove('ghost');
-    el.querySelector('#btnSearchName').classList.add('ghost');
-    mainBlist.innerHTML = '';
-  };
-
-  el.querySelector('#cancelSearchBtn').onclick = () => {
-    currentMode = 'list';
-    searchPanel.style.display = 'none';
-    el.querySelector('#btnSearchName').classList.add('ghost');
-    el.querySelector('#btnSearchCode').classList.add('ghost');
-    renderHome(el);
-  };
-
-  const doNameSearch = () => {
-    const q = fz(inputName.value.trim());
-    if (!q) return;
-    const words = q.split(' ').filter(Boolean);
-    const m = st.S.filter(s => 
-      !st.paid.has(key(s)) && 
-      (document.querySelector('input[name="mScope"]:checked').value === 'all' || s.inRoute) &&
-      words.every(w => fz(s.name || '').includes(w))
-    );
-    
-    const grouped = {};
-    m.forEach(s => (grouped[s.bld] = grouped[s.bld] || []).push(s));
-
-    let resHtml = '';
-    if (!m.length) {
-      resHtml = '<div class="empty">لا نتائج مطابقة.</div>';
-    } else {
-      Object.keys(grouped).sort(srt).forEach(b => {
-        const x = tot(grouped[b]);
-        const a = grouped[b][0];
-        resHtml += `<div class="brow prow" data-bld="${b}" data-sec="${a.sector}" data-blk="${a.blk}" role="button" tabindex="0">
-          <b>عمارة ${b} (قطاع ${a.sector} · بلوك ${a.blk})</b>
-          <span>${grouped[b].slice(0,3).map(s => esc(s.name)).join('، ')}${grouped[b].length > 3 ? '...' : ''}</span>
-          <strong>${money(x.value)}</strong>
-        </div>`;
-      });
-    }
-    mainBlist.innerHTML = resHtml;
-    bindSearchResultClicks();
-  };
-
-  const doCodeSearch = () => {
-    const sec = el.querySelector('#mSec').value.trim();
-    const blk = el.querySelector('#mBlk').value.trim();
-    const bld = el.querySelector('#mBld').value.trim();
-    if (!sec || !blk || !bld) { alert('أدخل القطاع والبلوك والعمارة'); return; }
-    st.sector = sec;
-    st.blk = blk;
-    st.open = bld;
-    renderHome(el);
-  };
-
-  el.querySelector('#mainSearchBtnName').onclick = doNameSearch;
-  el.querySelector('#mainSearchBtnCode').onclick = doCodeSearch;
-  inputName.onkeydown = (e) => { if (e.key === 'Enter') doNameSearch(); };
-
-  const bindSearchResultClicks = () => {
-    mainBlist.querySelectorAll('[data-bld]').forEach(btn => {
-      btn.onclick = () => {
-        st.sector = btn.dataset.sec;
-        st.blk = btn.dataset.blk;
-        st.open = btn.dataset.bld;
-        renderHome(el);
-      };
-    });
-  };
-
-  if (!ov) {
-    const sBldEl = el.querySelector('#sBld');
-    const bldInEl = el.querySelector('#bldIn');
-
-    if (sBldEl) {
-      sBldEl.addEventListener('change', function() {
-        handleBuildingSelection(this.value);
-      });
-    }
-
-    if (bldInEl) {
-      bldInEl.addEventListener('input', function() {
-        if (this.value.length === 2) { // التفاعل فقط عند اكتمال رقمين
-           handleBuildingSelection(this.value);
-        }
-      });
-      
-      // دعم الضغط على Enter في المربع
-      bldInEl.addEventListener('keydown', function(e) {
-         if (e.key === 'Enter') {
-             handleBuildingSelection(this.value);
-             this.blur(); // إغلاق الكيبورد
-         }
-      });
-    }
-
-    el.querySelector('#sSec').onchange = e => { st.sector = e.target.value; st.open = null; renderHome(el); };
-    el.querySelector('#sBlk').onchange = e => { st.blk = e.target.value; st.open = null; renderHome(el); };
-    el.querySelector('#modeList').onclick = () => { st.open = null; renderHome(el); };
-    
-    el.querySelectorAll('[data-b]').forEach(btn => {
-      btn.onclick = () => { st.sel.clear(); handleBuildingSelection(btn.dataset.b); };
-    });
-  } else {
-    el.querySelectorAll('[data-nav]').forEach(btn => {
-      btn.onclick = () => {
-        const dir = btn.dataset.nav;
-        const currentIdx = availableBlds.indexOf(st.open);
-        let target = null;
-        if (dir === 'prev' && currentIdx > 0) target = availableBlds[currentIdx - 1];
-        if (dir === 'next' && currentIdx < availableBlds.length - 1) target = availableBlds[currentIdx + 1];
-        if (target) handleBuildingSelection(target);
-      };
-    });
-    const selectAllCb = el.querySelector('#selectAllApts');
-    if (selectAllCb && ov) {
-      selectAllCb.onchange = (e) => {
-        if (e.target.checked) ov.a.forEach(s => st.sel.add(key(s)));
-        else st.sel.clear();
-        renderHome(el);
-      };
-    }
-    if (ov) bind(el, ov.a, ov.v, () => renderHome(el));
-  }
-
+  /* ===== ربط الأحداث ===== */
   const mainSearchBtn = el.querySelector('#mainSearchBtn');
   if (mainSearchBtn) {
     mainSearchBtn.onclick = () => {
@@ -629,9 +500,97 @@ export async function renderHome(el){
     };
   }
 
+  el.querySelector('#sSec').onchange = e => { st.sector = e.target.value; st.open = null; renderHome(el); };
+  el.querySelector('#sBlk').onchange = e => { st.blk = e.target.value; st.open = null; renderHome(el); };
+  
+  el.querySelector('#sBld').onchange = e => {
+    const v = e.target.value;
+    if (v) { st.open = v; st.bld = v; } else { st.open = null; }
+    renderHome(el);
+  };
+
+  el.querySelector('#modeList').onclick = () => {
+    st.open = null;
+    renderHome(el);
+  };
+
+  const bldIn = el.querySelector('#bldIn');
+  bldIn.addEventListener('input', () => {
+    if (bldIn.value.length === 2){
+      const v = bldIn.value;
+      if (g[v]){ st.open = v; st.bld = v; renderHome(el); }
+      else {
+        const inPaid = st.S.some(s => s.sector===st.sector && s.blk===st.blk && s.bld===v && st.paid.has(key(s)));
+        if (inPaid) toast('العمارة مسددة بالكامل');
+        else toast('لا توجد في السجلات');
+        bldIn.value = '';
+      }
+    }
+  });
+
+  el.querySelectorAll('[data-b]').forEach(b => {
+    b.onclick = () => {
+      st.sel.clear();
+      st.open = st.open === b.dataset.b ? null : b.dataset.b;
+      st.bld = st.open;
+      renderHome(el);
+    };
+  });
+
+
+
+
+
+
+
+
+  el.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.onclick = () => {
+      const dir = btn.dataset.nav;
+      // تصفية العمارات: نأخذ فقط العمارات التي تحتوي على شقق غير مسددة (قيمتها > 0)
+      const validBlds = Object.keys(g).filter(b => 
+        g[b].some(s => !st.paid.has(key(s))) 
+      ).sort((a,b) => Number(a) - Number(b));
+      
+      const currentIdx = validBlds.indexOf(st.open);
+      let target = null;
+      if (dir === 'prev' && currentIdx > 0) target = validBlds[currentIdx - 1];
+      if (dir === 'next' && currentIdx < validBlds.length - 1) target = validBlds[currentIdx + 1];
+      
+      if (target) {
+        st.open = target;
+        st.bld = target;
+        renderHome(el);
+      } else {
+        // إذا لم يجد تالياً أو سابقاً، يظهر رسالة
+        toast(dir === 'next' ? 'لا توجد عمارات تالية غير مسددة' : 'لا توجد عمارات سابقة غير مسددة');
+      }
+    };
+  });
+  
+  
+  
+  
+  
+  
+
+  const selectAllCb = el.querySelector('#selectAllApts');
+  if (selectAllCb && ov) {
+    selectAllCb.onchange = (e) => {
+      if (e.target.checked) {
+        ov.a.forEach(s => st.sel.add(key(s)));
+      } else {
+        st.sel.clear();
+      }
+      renderHome(el);
+    };
+  }
+
+  if (ov) bind(el, ov.a, ov.v, () => renderHome(el));
   scrollTo(0, y);
 }
 
+/* ===== صفحة ما تم تحصيله ===== */
 export async function renderLedger(el, reload, exp){
   back(false);
   await refresh();
@@ -681,43 +640,6 @@ export async function renderLedger(el, reload, exp){
       <button class="btn ghost" id="rl" type="button">تحديث الملف</button>
     </div>
   </div>`;
-
-  const advanceClients = [];
-  st.adv.forEach((balance, k) => {
-    if (balance > 0) {
-      const s = st.S.find(item => key(item) === k);
-      if (s) advanceClients.push({ ...s, advanceBalance: balance });
-    }
-  });
-  
-  if (advanceClients.length > 0) {
-    advanceClients.sort((a, b) => b.advanceBalance - a.advanceBalance);
-    let advHtml = `
-      <div class="card" style="margin-top: 15px; border: 1.5px solid var(--advance, #7c3aed); border-radius: var(--r-lg);">
-        <h2 style="color: var(--advance, #7c3aed);">💰 أرشيف السداد المقدم</h2>
-        <div class="ledger-list">
-    `;
-    advanceClients.forEach(s => {
-      advHtml += `
-        <div class="led-row" style="border-inline-start-color: var(--advance, #7c3aed);">
-          <div class="led-main">
-            <span class="led-apt" style="background: var(--advance, #7c3aed);">${s.apt || '?'}</span>
-            <div class="led-info">
-              <div class="led-name">${esc(s.name || 'بدون اسم')}</div>
-              <div class="led-meta">قطاع ${s.sector||''} · بلوك ${s.blk||''} · عمارة ${s.bld||''}</div>
-            </div>
-            <div class="led-right">
-              <div class="led-tags"><span class="tag" style="background: var(--advance, #7c3aed); color: #fff;">مقدم</span></div>
-              <div class="led-amount" style="color: var(--advance, #7c3aed);">${money(s.advanceBalance)}</div>
-            </div>
-          </div>
-        </div>
-      `;
-    });
-    advHtml += `</div></div>`;
-    el.insertAdjacentHTML('beforeend', advHtml);
-  }
-
   el.querySelectorAll('[data-m]').forEach(btn => {
     btn.onclick = ev => {
       ev.stopPropagation();
@@ -740,17 +662,31 @@ export async function renderLedger(el, reload, exp){
           renderLedger(el, reload, exp);
         }
       }
-      if (act === 'print'){
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	        if (act === 'print'){
+        // إضافة علامة الطباعة لمنع التراجع مستقبلاً
         await put('ledger', entry.id, { ...entry, printed: true });
+        
         const s = st.by.get(entry.key) || {};
         const q = new URLSearchParams({
           n: s.name||'', s: s.sector||'', b: s.blk||'', d: s.bld||'', a: s.apt||'',
           v: s.value||0, r: st.adv.get(entry.key)||0, q: entry.due||s.value||0,
           c: s.count||0, m: st.cycle, u: st.who, k: entry.key
         }).toString();
-        openPage('print.html', q + '&reprint=1');
+                openPage('print.html', q + '&reprint=1');
       }
-      if (act === 'advance'){
+ 
+	  
+	  
+	  
+	  
+           if (act === 'advance'){
         const s = st.by.get(entry.key);
         if (!s) return;
         if ((s.value||0) > 0){ toast('لا يمكن السداد المقدم لعميل ما زال عليه مديونية'); return; }
@@ -764,6 +700,47 @@ export async function renderLedger(el, reload, exp){
       }
     };
   });
+
+  // ===== إضافة أرشيف السداد المقدم =====
+  const advanceClients = [];
+  st.adv.forEach((balance, k) => {
+    if (balance > 0) {
+      const s = st.by.get(k);
+      if (s) advanceClients.push({ ...s, advanceBalance: balance });
+    }
+  });
+  
+  if (advanceClients.length > 0) {
+    advanceClients.sort((a, b) => b.advanceBalance - a.advanceBalance);
+    
+    let advHtml = `
+      <div class="card" style="margin-top: 15px; border: 1.5px solid var(--advance, #7c3aed); border-radius: var(--r-lg);">
+        <h2 style="color: var(--advance, #7c3aed);">💰 أرشيف السداد المقدم</h2>
+        <div class="ledger-list">
+    `;
+    
+    advanceClients.forEach(s => {
+      advHtml += `
+        <div class="led-row" style="border-inline-start-color: var(--advance, #7c3aed);">
+          <div class="led-main">
+            <span class="led-apt" style="background: var(--advance, #7c3aed);">${s.apt || '?'}</span>
+            <div class="led-info">
+              <div class="led-name">${esc(s.name || 'بدون اسم')}</div>
+              <div class="led-meta">قطاع ${s.sector||''} · بلوك ${s.blk||''} · عمارة ${s.bld||''}</div>
+            </div>
+            <div class="led-right">
+              <div class="led-tags"><span class="tag" style="background: var(--advance, #7c3aed); color: #fff;">مقدم</span></div>
+              <div class="led-amount" style="color: var(--advance, #7c3aed);">${money(s.advanceBalance)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    advHtml += `</div></div>`;
+    el.insertAdjacentHTML('beforeend', advHtml);
+  }
+
   el.querySelector('#rl').onclick = reload;
   el.querySelector('#ex').onclick = exp;
 }

@@ -23,6 +23,7 @@
     <h1>محصّل الغاز</h1>
     <p class="sub">اكتب بياناتك مرة واحدة، ثم افتح التطبيق ببصمتك.</p>
     <div class="stack">
+      <label class="field"><span>الاسم (اختياري)</span><input id="name" autocomplete="off" placeholder="يُؤخذ تلقائياً من رقم الأداء"></label>
       <label class="field"><span>رقم الأداء</span><input id="no" inputmode="numeric" autocomplete="off"></label>
       <label class="field"><span>كلمة السر</span><input id="pw" type="password" autocomplete="off"></label>
     </div>
@@ -55,14 +56,12 @@ $('go').onclick = async () => {
   const b = $('go'), m = $('msg');
   b.disabled = true; m.textContent = 'جارٍ التحقق…';
   try{
-    // تم إزالة $('name').value لأن الحقل غير موجود
-    const a = await login($('no').value.trim(), $('pw').value); 
+    const a = await login($('name').value.trim(), $('no').value, $('pw').value);
     localStorage.setItem('lastNo', a.no);
     const n = await loadFiles(a, t => m.textContent = t);
     m.textContent = `تم تحميل ${n} عميل`;
     await tryEnableLock();
-    // تم تصحيح المسار ليعمل على GitHub Pages
-    location.replace('/Collection/index.html'); 
+    location.replace('index.html');
   }catch(e){
     m.textContent = '✕ ' + e.message;
   }
