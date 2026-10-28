@@ -427,6 +427,16 @@ export async function renderHome(el){
 
   el.innerHTML = html;
 
+  // دالة موحدة لفتح العمارة وتحديث كل العناصر
+  const openBuilding = (bldValue) => {
+    if (!bldValue) return;
+    st.open = bldValue;
+    st.bld = bldValue;
+    const yScroll = window.scrollY;
+    renderHome(el);
+    window.scrollTo(0, yScroll); // الحفاظ على مكان التمرير
+  };
+
   const searchPanel = el.querySelector('#searchPanel');
   const nameWrap = el.querySelector('#searchNameWrap');
   const codeWrap = el.querySelector('#searchCodeWrap');
@@ -523,51 +533,46 @@ export async function renderHome(el){
     const sBldEl = el.querySelector('#sBld');
     const bldInEl = el.querySelector('#bldIn');
 
-    // ✅ التعديل هنا: ربط القائمة والمربع ببعضهما بدون تجميد
+    // ✅ الربط الشامل: القائمة ومربع النص
     if (sBldEl && bldInEl) {
       sBldEl.addEventListener('change', function() {
-        bldInEl.value = this.value; // كتابة القيمة في المربع عند الاختيار من القائمة
+        bldInEl.value = this.value;
+        openBuilding(this.value);
       });
 
       bldInEl.addEventListener('input', function() {
         const typed = this.value;
-        // تحديث القائمة المنسدلة فوراً بمجرد الكتابة
+        let targetBld = typed;
+
+        if (typed.length === 1) {
+          targetBld = '0' + typed; // إضافة صفر للخانة الواحدة
+        }
+
         for (let i = 0; i < sBldEl.options.length; i++) {
-          if (sBldEl.options[i].value === typed) {
+          if (sBldEl.options[i].value === targetBld) {
             sBldEl.selectedIndex = i;
             break;
           }
         }
-        // لو المستخدم كتب رقم واحد، بنضيف صفر عشان يتوافق مع التنسيق (مثلاً 4 تصبح 04)
-        if (typed.length === 1) {
-          const padded = '0' + typed;
-          for (let i = 0; i < sBldEl.options.length; i++) {
-            if (sBldEl.options[i].value === padded) {
-              sBldEl.selectedIndex = i;
-              break;
-            }
-          }
-        }
-        
-        // فتح العمارة فوراً لو الرقم موجود في القائمة
-        if (sBldEl.value && sBldEl.value === typed) {
-          st.open = typed; 
-          st.bld = typed;
-          renderHome(el);
+
+        if (targetBld.length >= 1 && targetBld !== '00') { 
+           // إذا كتب رقمين أو كتب رقم وتم إضافة الصفر له، افتح العمارة
+           if (targetBld.length === 2) {
+               openBuilding(targetBld);
+           }
         }
       });
     }
-    // ==========================================
 
     el.querySelector('#sSec').onchange = e => { st.sector = e.target.value; st.open = null; renderHome(el); };
     el.querySelector('#sBlk').onchange = e => { st.blk = e.target.value; st.open = null; renderHome(el); };
-    el.querySelector('#sBld').onchange = e => { st.open = e.target.value; st.bld = e.target.value; renderHome(el); };
     el.querySelector('#modeList').onclick = () => { st.open = null; renderHome(el); };
     
     el.querySelectorAll('[data-b]').forEach(btn => {
-      btn.onclick = () => { st.sel.clear(); st.open = btn.dataset.b; st.bld = st.open; renderHome(el); };
+      btn.onclick = () => { st.sel.clear(); openBuilding(btn.dataset.b); };
     });
   } else {
+    // ✅ الربط الشامل: أزرار السابق والتالي
     el.querySelectorAll('[data-nav]').forEach(btn => {
       btn.onclick = () => {
         const dir = btn.dataset.nav;
@@ -576,7 +581,7 @@ export async function renderHome(el){
         let target = null;
         if (dir === 'prev' && currentIdx > 0) target = sortedBlds[currentIdx - 1];
         if (dir === 'next' && currentIdx < sortedBlds.length - 1) target = sortedBlds[currentIdx + 1];
-        if (target) { st.open = target; st.bld = target; renderHome(el); }
+        if (target) openBuilding(target);
       };
     });
     const selectAllCb = el.querySelector('#selectAllApts');
