@@ -1,19 +1,22 @@
 import {get} from '../core/db.js';
 import {isOn, enable, disable, verify} from './lock.js';
 import {openExportDialog} from './exportExcel.js';
-// دالة إشعار محلية بسيطة
+
 function showToast(msg) {
-  alert(msg);
+  // إشعار بسيط غير معطِّل
+  const t = document.getElementById('toast');
+  if (t) {
+    t.textContent = msg;
+    t.className = 'show';
+    clearTimeout(t._t);
+    t._t = setTimeout(() => { t.className = ''; }, 2400);
+  } else {
+    alert(msg);
+  }
 }
-
-
-
-
-
 
 const ok = f => /^https:\/\//.test(f) || /^[\w.-]+\.html?$/.test(f);
 
-// التعديل هنا: إذا كان الملف gas_Calculator.html يفتح من الروت، وإلا من مجلد pages
 const url = f => {
   if (/^https:/.test(f)) return f;
   if (f.startsWith('gas_') || f === 'index.html') return f;
@@ -21,6 +24,36 @@ const url = f => {
 };
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ===== تعريف الأوضاع الأربعة (مركزي) ===== */
+export const THEMES = [
+  {
+    id: 'light',
+    label: '☀️ فاتح',
+    desc: 'نهاراً indoors',
+    preview: { bg: '#ffffff', fg: '#0f2438' }
+  },
+  {
+    id: 'dark',
+    label: '🌙 داكن',
+    desc: 'ليلاً، توفير بطارية',
+    preview: { bg: '#1e293b', fg: '#f1f5f9' }
+  },
+  {
+    id: 'desert',
+    label: '🏜️ صحراوي',
+    desc: 'شمس مباشرة، تقليل الوهج',
+    preview: { bg: '#fdf6ec', fg: '#3b2a1a' }
+  },
+  {
+    id: 'highcontrast',
+    label: '🌑 ليلي عالي التباين',
+    desc: 'تباين أقصى لضعف البصر',
+    preview: { bg: '#000000', fg: '#ffffff' }
+  }
+];
+
+const VALID_IDS = THEMES.map(t => t.id);
 
 /* ===== فتح صفحة داخل iframe ===== */
 export function openPage(file, params){
@@ -37,6 +70,13 @@ export function openPage(file, params){
   d.showModal();
 }
 
+/* ===== تطبيق وضع على المستند + حفظ ===== */
+export function applyTheme(id){
+  if (!VALID_IDS.includes(id)) id = 'light';
+  document.body.setAttribute('data-theme', id);
+  try { localStorage.setItem('app-theme', id); } catch(e){}
+}
+
 /* ===== بناء القائمة المنسدلة ===== */
 export async function renderMenu(){
   const f = await get('meta','file');
@@ -48,6 +88,7 @@ export async function renderMenu(){
   if (!m) return;
 
   const lockOn = await isOn();
+  const currentTheme = (document.body.getAttribute('data-theme') || 'light').toLowerCase();
 
   let html = '';
 
@@ -60,22 +101,37 @@ export async function renderMenu(){
 
   // زر حساب الفاتورة (الحاسبة)
   html += `<button type="button" data-calc="1">🧮 حساب الفاتورة</button>`;
-  
+
   // تصدير Excel
   html += `<button type="button" data-export="1">📊 تصدير Excel (غير المسددين)</button>`;
-   // البحث خارج النطاق
+
+  // البحث خارج النطاق
   html += `<button type="button" data-search-all="1">🔍 بحث خارج النطاق</button>`;
 
-  // تبديل الوضع الداكن
-  const isDark = document.body.getAttribute('data-theme') === 'dark';
-  html += `<button type="button" data-theme-toggle="1">${isDark ? '☀️ الوضع الفاتح' : '🌙 الوضع الداكن'}</button>`;
-
-
-
-
-
-
-
+  // ===== التعديل: قائمة أوضاع العرض (فرعية قابلة للطي) =====
+  const currentLabel = (THEMES.find(t => t.id === currentTheme) || THEMES[0]).label;
+  html += `
+    <div class="themes-group" data-themes-group="1">
+      <button type="button" class="themes-toggle" data-themes-toggle="1" aria-expanded="false">
+        <span>🎨 وضع العرض</span>
+        <span class="themes-current">${currentLabel}</span>
+        <span class="themes-arrow">▾</span>
+      </button>
+      <div class="themes-list" data-themes-list="1" hidden>
+        ${THEMES.map(t => {
+          const active = currentTheme === t.id;
+          return `<button type="button" class="theme-btn ${active ? 'active' : ''}" data-theme-pick="${t.id}" title="${esc(t.desc)}">
+            <span class="theme-preview" style="background:${t.preview.bg};color:${t.preview.fg};border-color:${t.preview.fg}33">Aa</span>
+            <span class="theme-txt">
+              <span class="theme-lbl">${t.label}</span>
+              <span class="theme-desc">${esc(t.desc)}</span>
+            </span>
+            <span class="theme-chk">${active ? '✓' : ''}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
 
   html += '<hr>';
 
@@ -98,13 +154,13 @@ export async function renderMenu(){
       if (lockOn){
         await verify();
         await disable();
-        alert('أُلغي قفل التطبيق.');
+        showToast('أُلغي قفل التطبيق.');
       } else {
         await enable();
-        alert('تم تفعيل القفل. سيطلب التطبيق بصمتك عند كل فتح.');
+        showToast('تم تفعيل القفل. سيطلب التطبيق بصمتك عند كل فتح.');
       }
     }catch(e){
-      alert(e.message || 'تعذر تنفيذ العملية');
+      showToast(e.message || 'تعذر تنفيذ العملية');
     }
     renderMenu();
   };
@@ -121,7 +177,7 @@ export async function renderMenu(){
     openExportDialog();
   };
 
-    // زر البحث خارج النطاق
+  // زر البحث خارج النطاق
   const btnSearchAll = m.querySelector('[data-search-all]');
   if (btnSearchAll) {
     btnSearchAll.onclick = () => {
@@ -132,35 +188,31 @@ export async function renderMenu(){
     };
   }
 
-  // ===== التعديل: تبديل الوضع الداكن/الفاتح =====
-  const btnTheme = m.querySelector('[data-theme-toggle]');
-  if (btnTheme) {
-    btnTheme.onclick = () => {
-      m.hidden = true;
-      const isDark = document.body.getAttribute('data-theme') === 'dark';
-
-      if (isDark) {
-        // التعديل: setAttribute بدل removeAttribute لتفعيل كتلة body[data-theme="light"] في base.css
-        document.body.setAttribute('data-theme', 'light');
-        localStorage.setItem('app-theme', 'light');
-        showToast('تم تفعيل الوضع الفاتح');
-      } else {
-        document.body.setAttribute('data-theme', 'dark');
-        localStorage.setItem('app-theme', 'dark');
-        showToast('تم تفعيل الوضع الداكن');
-      }
-
-      // إعادة رسم الصفحة الحالية لتطبيق الألوان
-      renderMenu(); 
-      document.querySelector('#tabs button.on')?.click();
+  // ===== التعديل: ربط قائمة الأوضاع =====
+  const themesToggle = m.querySelector('[data-themes-toggle]');
+  const themesList = m.querySelector('[data-themes-list]');
+  if (themesToggle && themesList){
+    themesToggle.onclick = (ev) => {
+      ev.stopPropagation();
+      const open = themesList.hidden;
+      themesList.hidden = !open;
+      themesToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      themesToggle.querySelector('.themes-arrow').textContent = open ? '▴' : '▾';
     };
   }
 
-
-
-
-
-
+  m.querySelectorAll('[data-theme-pick]').forEach(btn => {
+    btn.onclick = (ev) => {
+      ev.stopPropagation();
+      const id = btn.dataset.themePick;
+      applyTheme(id);
+      const label = (THEMES.find(t => t.id === id) || THEMES[0]).label;
+      showToast('تم تفعيل: ' + label);
+      // إعادة رسم القائمة + الصفحة الحالية
+      renderMenu();
+      document.querySelector('#tabs button.on')?.click();
+    };
+  });
 
   // الواجهات الإضافية من الأدمن
   m.querySelectorAll('[data-f]').forEach(btn => {
